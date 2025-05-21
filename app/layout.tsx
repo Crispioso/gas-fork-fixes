@@ -1,4 +1,3 @@
-import "./globals.css";
 // 1. Import useCart alongside CartProvider
 import { CartProvider, useCart } from "@/components/CartProvider";
 
@@ -6,7 +5,7 @@ import { CartProvider, useCart } from "@/components/CartProvider";
 function CartDebug() {
   "use client"; // This directive is important, marking it as a Client Component
   // 2. Call the imported useCart hook
-  const value = useCart();
+  const value = useCart;();
   return (
     <div style={{ color: value === null ? "red" : "lime" }}>
       Cart context is {value === null ? "NULL" : "OK"}
