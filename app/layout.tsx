@@ -1,9 +1,11 @@
+// app/layout.tsx
 import "./globals.css";
-import { CartProvider } from "@/components/CartProvider";
+import { CartProvider, useCart } from "@/components/CartProvider"; // Import useCart here
 
 function CartDebug() {
   "use client";
-  const value = require("@/components/CartProvider").useCart();
+  // const value = require("@/components/CartProvider").useCart(); // Remove this line
+  const value = useCart(); // Use the imported hook
   return (
     <div style={{ color: value === null ? "red" : "lime" }}>
       Cart context is {value === null ? "NULL" : "OK"}
