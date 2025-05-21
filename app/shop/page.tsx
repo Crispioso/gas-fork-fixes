@@ -1,33 +1,38 @@
 "use client";
+
 import useSWR from "swr";
 import { useCart } from "@/components/CartProvider";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import CardItem from "@/components/CardItem";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function ShopPage() {
   const { data: cards, error } = useSWR("/api/cards", fetcher);
   const { addToCart } = useCart();
+  
 
   if (error) return <div className="text-red-500">Failed to load cards.</div>;
-  if (!cards) return <div className="text-white">Loading cards…</div>;
+  if (!cards) return <LoadingSpinner />;
 
   return (
     <main className="max-w-5xl mx-auto py-10">
       <h1 className="text-4xl font-['Press_Start_2P',monospace] text-neonPink mb-8 text-center drop-shadow">
         GAY RETO TCG Shop
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-3 sm:grid-cols-1 md:grid-cols-3 gap-8">
+
         {cards.map((card: any) => (
           <div
             key={card.id}
-            className="bg-black border-4 border-neonPink rounded-2xl shadow-lg p-4 flex flex-col items-center relative hover:scale-105 transition-transform"
+            className="bg-black border-4 border-neonPink rounded-2xl shadow-lg p-4 flex flex-col items-center relative hover:scale-101 transition-transform duration-200"
           >
             <img
-              src={card.imageUrl}
-              alt={card.name}
-              className="w-48 h-64 object-cover rounded-xl mb-4 border-2 border-white shadow"
-              style={{ imageRendering: "pixelated" }}
-            />
+  src={card.imageUrl}
+  alt={card.name}
+  className="card-img"
+/>
+
             <div className="font-['Press_Start_2P',monospace] text-lg text-neonCyan mb-2 text-center">
               {card.name}
             </div>
@@ -43,6 +48,8 @@ export default function ShopPage() {
           </div>
         ))}
       </div>
+      <div className="bg-green-500 text-white text-3xl p-10">TAILWIND IS WORKING</div>
+
     </main>
   );
 }

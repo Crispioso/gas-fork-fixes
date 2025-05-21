@@ -1,27 +1,16 @@
-// 1. Import useCart alongside CartProvider
-import { CartProvider, useCart } from "@/components/CartProvider";
+import "./globals.css";
+import { CartProvider } from "@/components/CartProvider";
+import Navbar from "@/components/Navbar"; // Import your Navbar
 
-// This is your CartDebug component, now correctly using useCart
-function CartDebug() {
-  "use client"; // This directive is important, marking it as a Client Component
-  // 2. Call the imported useCart hook
-  const value = useCart;();
-  return (
-    <div style={{ color: value === null ? "red" : "lime" }}>
-      Cart context is {value === null ? "NULL" : "OK"}
-    </div>
-  );
-}
-
-// This is your RootLayout component
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Press+Start+2P" />
+      </head>
       <body>
-        {/* CartProvider wraps your page content and other client components that need cart context */}
-        {/* CartProvider itself is correctly marked "use client" in its own file (src/components/CartProvider.tsx) */}
         <CartProvider>
-          <CartDebug /> {/* CartDebug is rendered as a child of CartProvider */}
+          <Navbar />
           {children}
         </CartProvider>
       </body>
