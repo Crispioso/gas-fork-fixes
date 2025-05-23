@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCart } from "@/components/CartProvider";
+import { useCart } from "./CartProvider";
 
 export default function CardItem({ card }: { card: any }) {
   const { addToCart } = useCart();

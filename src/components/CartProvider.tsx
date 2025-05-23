@@ -9,15 +9,19 @@ export function useCart() {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<any[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const existing = localStorage.getItem("cart");
     if (existing) setCart(JSON.parse(existing));
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+    if (hydrated) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+  }, [cart, hydrated]);
 
   function addToCart(item: any) {
     setCart((prev) => {
@@ -40,10 +44,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart([]);
   }
 
+  if (!hydrated) return null;
+
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, setCart }}>
       {children}
     </CartContext.Provider>
   );
 }
-

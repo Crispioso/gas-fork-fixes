@@ -1,11 +1,16 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
+content: [
+  "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+  // If you have any UI components in the 'pages' directory (not just API routes)
+  // "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+],
   theme: {
     extend: {
       colors: {
         pastelBlue: "#a7c7e7",
-        pastelPink: "#f9c6d6",
-        pastelMint: "#b8e0d2",
-        pastelGray: "#f7fafc",
+        pastelMint: "#b6e3c6",
         slateText: "#374151",
       },
       fontFamily: {
