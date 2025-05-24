@@ -1,0 +1,82 @@
+/* src/components/Navbar.module.css */
+
+.navbar {
+  background-color: #1a1a1a;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logoLink {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  align-items: center; /* Align items vertically */
+}
+
+.navItem {
+ position: relative; /* For badge positioning */
+}
+
+.navLink {
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #e5e7eb;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  display: flex; /* Changed to flex to align text and badge */
+  align-items: center;
+  gap: 0.3rem; /* Space between link text and badge */
+}
+
+.navLink:hover,
+.navLinkActive {
+  background-color: #374151;
+  color: #ffffff;
+}
+
+.navLinkActive {
+  background-color: #a7c7e7;
+  color: #1f2937;
+}
+
+.cartQuantityBadge {
+  background-color: #FF007F; /* Neon Pink, or your preferred badge color */
+  color: white;
+  border-radius: 50%; /* Makes it circular */
+  padding: 0.1em 0.45em; /* Adjust padding to size */
+  font-size: 0.75rem; /* Smaller font for the badge number */
+  font-weight: bold;
+  line-height: 1; /* Ensures text is centered vertically */
+  min-width: 18px; /* Minimum width */
+  min-height: 18px; /* Minimum height */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Position it if you want it offset from the text, e.g., top-right */
+  /* For simplicity, current .navLink display:flex and gap will align it next to text */
+  /* Example for top-right absolute positioning:
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  */
+}

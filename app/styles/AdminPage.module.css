@@ -1,0 +1,103 @@
+/* AdminPage.module.css */
+
+.formContainer {
+  max-width: 500px; /* Or your preferred max-width */
+  margin: 40px auto;
+  padding: 2rem;
+  background-color: #ffffff; /* Dark background, slightly off-black */
+  color: #050101; /* Light gray text for better readability than pure white */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+}
+
+.formTitle {
+  font-size: 1.75rem; /* Slightly adjusted size */
+  font-weight: 700; /* Bold */
+  margin-bottom: 1.5rem;
+  color: #000000; /* White title */
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #000000; /* Lighter gray for labels */
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #ffffff; /* Darker input background */
+  color: #000000;
+  font-size: 1rem;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.inputField::placeholder {
+  color: #777;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #ff007f; /* Neon Pink for focus */
+  box-shadow: 0 0 0 3px rgba(255, 0, 127, 0.3);
+}
+
+/* Specific style for file input to make it look better */
+.fileInput {
+  /* Basic styling, file inputs are notoriously hard to style consistently */
+  /* Consider a custom file input component for advanced styling */
+  color: #b0b0b0;
+}
+
+.fileInput::-webkit-file-upload-button {
+  background-color: #ff007f; /* Neon Pink */
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.fileInput::-webkit-file-upload-button:hover {
+  background-color: #e00070; /* Darker Neon Pink */
+}
+
+.submitButton {
+  width: 100%;
+  background-color: #ff007f; /* Neon Pink */
+  color: #ffffff;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700; /* Bold */
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.submitButton:hover {
+  background-color: #e00070; /* Darker Neon Pink */
+  transform: translateY(-1px);
+}
+
+.submitButton:disabled {
+  background-color: #777;
+  color: #aaa;
+  cursor: not-allowed;
+  transform: translateY(0);
+}
+

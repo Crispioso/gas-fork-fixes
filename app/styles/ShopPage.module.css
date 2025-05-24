@@ -1,0 +1,211 @@
+/* app/shop/ShopPage.module.css */
+.shopImageBanner {
+  width: 100%; /* Stretches to the full width of its container (main tag) */
+  height: 33vh; /* Approximately 1/3 of the viewport height - adjust as needed */
+  position: relative; /* Crucial for Next/Image with layout="fill" */
+  overflow: hidden; 
+
+  object-fit: contain;/* Ensures image parts outside this div are not shown */
+  background-color: #282828; /* Fallback color if image is slow to load or fails */
+}
+.pageContainer {
+  max-width: 1200px;
+  margin: 2rem auto; /* Add some margin for the page container */
+  padding: 1rem;
+  
+}
+
+/* Dark Product Card Style */
+.productCard {
+  background-color: #ffffff; /* Dark background from admin form */
+  color: #e0e0e0; /* Light gray text */
+  border: 1px solid #ffffff;
+  border-radius: 12px; /* Rounded corners from admin form */
+  padding: 1.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); /* Adjusted shadow for dark card */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%; /* Ensure cards in a row have same height if grid auto-rows */
+}
+
+.productCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.productCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* New styles for image cycling on card */
+.productImageWrapper {
+  position: relative;
+  display: flex; /* Use flex to align buttons with image */
+  align-items: center; /* Vertically center buttons with image */
+  justify-content: center; /* Horizontally center image if buttons take space */
+  margin-bottom: 1rem;
+  width: 190px; /* Match image width */
+  height: 260px; /* Match image height */
+}
+
+.productImageContainer {
+  cursor: pointer;
+  display: block; /* Or inline-block */
+  width: 100%;
+  height: 100%;
+}
+
+.productImage {
+  width: 100%; /* Fill the container */
+  height: 100%; /* Fill the container */
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #2c2c2c;
+  border: 1px solid #444;
+}
+
+.imageNavButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.imageNavButton:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.imageNavPrev {
+  left: 5px;
+}
+
+.imageNavNext {
+  right: 5px;
+}
+
+
+.productName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #000000;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  min-height: 2.2rem; 
+}
+
+.productPrice {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #b6e3c6; 
+  margin-bottom: 1rem;
+}
+
+.addToCartButtonContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: auto; 
+  width: 100%;
+}
+
+.addedMessage {
+  margin-top: 8px;
+  color: #b6e3c6; 
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.inCartButtonDark {
+  background-color: #374151 !important; 
+  color: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+/* Modal Styles (existing and new for modal nav) */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
+  display: flex;
+  flex-direction: column; /* To position counter below image content */
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background-color: #1a1a1a;
+  padding: 15px; /* Reduced padding */
+  border-radius: 12px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh; /* Overall max height for content area */
+  display: flex; /* To align image and nav buttons */
+  align-items: center;
+  justify-content: center;
+}
+
+.modalCloseButton {
+  position: absolute;
+  top: -10px; /* Position outside a bit */
+  right: -10px; /* Position outside a bit */
+  background: white;
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+  font-size: 1.5rem; /* Slightly smaller */
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  z-index: 1010; /* Above modal content */
+}
+
+.modalCloseButton:hover {
+  background: #ff007f;
+  color: white;
+  border-color: #ff007f;
+}
+
+/* Modal Image Navigation Buttons */
+.modalImageNavPrev {
+  left: -40px; /* Position outside the image content area */
+}
+
+.modalImageNavNext {
+  right: -40px; /* Position outside the image content area */
+}
+
+.modalImageCounter {
+    color: white;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+

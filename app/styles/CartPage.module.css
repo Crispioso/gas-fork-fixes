@@ -1,0 +1,303 @@
+/* CartPage.module.css */
+
+.pageContainer {
+  max-width: 900px; /* Increased max-width for cart layout */
+  margin: 40px auto;
+  padding: 1rem; /* Default padding */
+  font-family: 'Inter', sans-serif;
+  color: #374151; /* Default text color */
+}
+
+@media (min-width: 768px) {
+  .pageContainer {
+    padding: 2rem; /* More padding on larger screens */
+  }
+}
+
+.pageTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #1a1a1a; /* Dark title */
+}
+
+/* Empty Cart Styles */
+.emptyCartContainer {
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.emptyCartTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+.emptyCartText {
+  margin-bottom: 1.5rem;
+  color: #555;
+}
+
+.goToShopButton {
+  background-color: #FF007F; /* Neon Pink */
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-transform: uppercase;
+}
+
+.goToShopButton:hover {
+  background-color: #e00070; /* Darker Neon Pink */
+}
+
+/* Cart Items List */
+.cartItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cartItem {
+  display: flex;
+  flex-direction: column; /* Stack on small screens */
+  gap: 1rem;
+  align-items: flex-start; /* Align to start on small screens */
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+@media (min-width: 768px) { /* Tablet and larger */
+  .cartItem {
+    flex-direction: row; /* Row layout on larger screens */
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.itemDetails {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1; /* Allow this section to grow */
+}
+
+.itemImage {
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.itemName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.itemPrice {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.itemActions {
+  display: flex;
+  flex-direction: column; /* Stack actions on small screens */
+  align-items: flex-start; /* Align actions to start on small screens */
+  gap: 0.75rem;
+  width: 100%; /* Full width on small screens */
+}
+
+@media (min-width: 768px) { /* Tablet and larger */
+  .itemActions {
+    flex-direction: row;
+    align-items: center;
+    width: auto; /* Auto width on larger screens */
+  }
+}
+
+
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantityButton {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background-color: #f0f0f0;
+  color: #374151;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantityButton:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.quantityButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantityDisplay {
+  font-weight: 500;
+  min-width: 20px; /* Ensure space for quantity */
+  text-align: center;
+}
+
+.itemTotalPrice {
+  font-weight: 600;
+  width: auto; /* Adjust width as needed */
+  text-align: right;
+  min-width: 70px; /* Ensure space for price */
+}
+
+@media (min-width: 768px) {
+  .itemTotalPrice {
+    width: 80px;
+  }
+}
+
+
+.removeButton {
+  color: #e53e3e; /* Red for remove */
+  background-color: transparent;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.removeButton:hover {
+  color: #c53030; /* Darker red */
+  background-color: #fed7d7; /* Light red background on hover */
+}
+
+/* Cart Summary */
+.cartSummary {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #f9fafb; /* Slightly off-white background */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.summaryTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: #1a1a1a;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.summaryLabel {
+  color: #555;
+}
+
+.summaryValue {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.summaryTotalRow {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.summaryTotalLabel {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.summaryTotalValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.checkoutButton {
+  width: 100%;
+  margin-top: 1.5rem;
+  background-color: #FF007F; /* Neon Pink */
+  color: #ffffff;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.checkoutButton:hover:not(:disabled) { /* Ensure hover only applies when not disabled */
+  background-color: #e00070; /* Darker Neon Pink */
+}
+
+.checkoutButton:disabled {
+  background-color: #cccccc; /* Gray out when disabled */
+  color: #666666;
+  cursor: not-allowed;
+}
+
+
+.clearCartButton {
+  width: 100%;
+  margin-top: 0.75rem;
+  background-color: #d1d5db; /* Gray */
+  color: #1f2937; /* Dark gray text */
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clearCartButton:hover {
+  background-color: #9ca3af; /* Darker Gray */
+}
+
+.minimumSpendMessage { /* New style for the message */
+  text-align: center;
+  color: #e53e3e; /* Red color for warning */
+  background-color: #fed7d7; /* Light red background */
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  border: 1px solid #f56565;
+}

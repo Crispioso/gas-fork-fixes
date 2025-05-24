@@ -1,16 +1,32 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql" // Changed from "sqlite"
+  url      = env("DATABASE_URL")
+  // Optional: if using connection pooling with Supabase/PgBouncer, you might need to add ?pgbouncer=true
+  // e.g., url = env("DATABASE_URL") + "?pgbouncer=true"
+  // For direct connection, the base URL is usually fine.
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+// Your existing Card and Image models (and any other models)
+model Card {
+  id        String   @id @default(cuid())
+  name      String
+  price     Int
+  images    Image[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
-model Card {
-  id        Int      @id @default(autoincrement())
-  name      String
-  imageUrl  String
-  price     Int
+model Image {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String?
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
