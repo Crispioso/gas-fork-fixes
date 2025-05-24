@@ -31,3 +31,16 @@ export const config = {
   // It's a common default matcher.
   matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
 };
+const nextConfig = {
+    // ...
+    // Your existing code
+    
+     experimental: {
+         instrumentationHook: true,
+         serverComponentsExternalPackages: ['@middleware.io/agent-apm-nextjs']
+     }
+     
+    // ...
+    // Your existing code
+}
+module.exports = nextConfig
