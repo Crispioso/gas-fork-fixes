@@ -20,6 +20,7 @@ const nextConfig = {
   },
 
   // ... any other existing configurations you have ...
+  
 };
 
 export default nextConfig;
