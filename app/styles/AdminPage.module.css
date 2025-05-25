@@ -1,21 +1,21 @@
-/* AdminPage.module.css */
+/* AdminPage.module.css or e.g., app/styles/AdminPage.module.css */
 
 .formContainer {
-  max-width: 500px; /* Or your preferred max-width */
+  max-width: 600px; /* Slightly wider to accommodate search results if needed */
   margin: 40px auto;
   padding: 2rem;
-  background-color: #ffffff; /* Dark background, slightly off-black */
-  color: #050101; /* Light gray text for better readability than pure white */
+  background-color: #1a1a1a;
+  color: #e0e0e0;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   border: 1px solid #333;
 }
 
 .formTitle {
-  font-size: 1.75rem; /* Slightly adjusted size */
-  font-weight: 700; /* Bold */
+  font-size: 1.75rem;
+  font-weight: 700;
   margin-bottom: 1.5rem;
-  color: #000000; /* White title */
+  color: #ffffff;
   text-align: center;
 }
 
@@ -28,7 +28,7 @@
   font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  color: #000000; /* Lighter gray for labels */
+  color: #b0b0b0;
 }
 
 .inputField {
@@ -36,10 +36,11 @@
   padding: 0.8rem 1rem;
   border-radius: 8px;
   border: 1px solid #444;
-  background-color: #ffffff; /* Darker input background */
-  color: #000000;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
   font-size: 1rem;
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-sizing: border-box; /* Ensure padding doesn't make it overflow */
 }
 
 .inputField::placeholder {
@@ -52,15 +53,12 @@
   box-shadow: 0 0 0 3px rgba(255, 0, 127, 0.3);
 }
 
-/* Specific style for file input to make it look better */
 .fileInput {
-  /* Basic styling, file inputs are notoriously hard to style consistently */
-  /* Consider a custom file input component for advanced styling */
   color: #b0b0b0;
 }
 
 .fileInput::-webkit-file-upload-button {
-  background-color: #ff007f; /* Neon Pink */
+  background-color: #ff007f;
   color: #ffffff;
   border: none;
   padding: 0.6rem 1rem;
@@ -68,36 +66,129 @@
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.2s ease;
+  margin-right: 10px; /* Add some space next to the button */
 }
 
 .fileInput::-webkit-file-upload-button:hover {
-  background-color: #e00070; /* Darker Neon Pink */
+  background-color: #e00070;
 }
 
 .submitButton {
   width: 100%;
-  background-color: #ff007f; /* Neon Pink */
+  background-color: #ff007f;
   color: #ffffff;
   padding: 0.9rem 1rem;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 700; /* Bold */
+  font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, transform 0.1s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-top: 1rem; /* Add some space above the main submit button */
 }
 
-.submitButton:hover {
-  background-color: #e00070; /* Darker Neon Pink */
+.submitButton:hover:not(:disabled) {
+  background-color: #e00070;
   transform: translateY(-1px);
 }
 
 .submitButton:disabled {
-  background-color: #777;
-  color: #aaa;
+  background-color: #555; /* Darker grey for disabled */
+  color: #999;
   cursor: not-allowed;
   transform: translateY(0);
+}
+
+/* Styles for Pokémon API Search Section */
+.searchButton {
+  background-color: #007bff; /* Example: Blue search button */
+  color: white;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.searchButton:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.searchButton:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.searchResultsContainer {
+  margin-top: 1rem;
+  max-height: 300px; /* Limit height and make it scrollable */
+  overflow-y: auto;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background-color: #2c2c2c; /* Background for the results area */
+}
+
+.searchResultItem {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: #3a3a3a; /* Background for each item */
+  border-radius: 6px;
+  gap: 10px;
+}
+
+.searchResultItem:last-child {
+  margin-bottom: 0;
+}
+
+.selectImageButton {
+  background-color: #28a745; /* Example: Green button */
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-left: auto; /* Push to the right */
+}
+
+.selectImageButton:hover {
+  background-color: #1e7e34;
+}
+
+/* Styles for the message area (if you want to use module styles for it) */
+.messageDisplay {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.messageError {
+  background-color: #ffdddd;
+  color: #d8000c;
+  border: 1px solid #ffc3c3;
+}
+
+.messageSuccess {
+  background-color: #ddffdd;
+  color: #4f8a10;
+  border: 1px solid #c3ffc3;
+}
+
+.messageInfo { /* For messages like "Searching..." or "Uploading..." */
+  background-color: #eeeeee;
+  color: #333333;
+  border: 1px solid #cccccc;
 }
 
