@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     typescript: true,
   });
 
-  const { lineItems } = req.body;
+  let { lineItems } = req.body; // Use let so we can modify it
 
   if (!Array.isArray(lineItems) || lineItems.length === 0) {
     return res.status(400).json({ error: 'Invalid or empty lineItems provided.' });
@@ -44,9 +44,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Collect card IDs from line items
     const cardIds = lineItems.map(item => item.cardId).join(',');
 
+    // Remove cardId from lineItems before sending to Stripe
+    const stripeLineItems = lineItems.map(({ cardId, ...item }) => item);
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: lineItems,
+      line_items: stripeLineItems, // Use the modified line items
       mode: 'payment',
       success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/cart`,
