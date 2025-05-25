@@ -6,7 +6,8 @@ export default function CardItem({ card }: { card: any }) {
   const [added, setAdded] = useState(false);
 
   function handleAddToCart() {
-    addToCart(card);
+    // Ensure the card object includes cardId for checkout
+    addToCart({ ...card, cardId: card.id });
     setAdded(true);
     setTimeout(() => setAdded(false), 900);
   }
