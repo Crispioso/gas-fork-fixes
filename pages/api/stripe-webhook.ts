@@ -18,23 +18,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const sig = req.headers['stripe-signature'] as string;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!sig) {
+    console.error("❌ Missing Stripe-Signature header");
+    return res.status(400).send("Missing Stripe-Signature header");
+  }
+
+  if (!webhookSecret) {
+    console.error("❌ Missing STRIPE_WEBHOOK_SECRET in environment variables");
+    return res.status(500).send("Server misconfigured: missing Stripe webhook secret");
+  }
+
   const buf = await buffer(req);
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
   } catch (err) {
-    console.error("Invalid Stripe signature:", (err as Error).message);
+    console.error("❌ Invalid Stripe signature:", (err as Error).message);
     return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
   }
 
-  console.log("Received event:", event.type);
+  console.log("✅ Received event:", event.type);
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const cardIds = session.metadata?.cardIds?.split(',') || [];
 
-    console.log("cardIds from metadata:", cardIds);
+    console.log("📦 cardIds from metadata:", cardIds);
 
     for (const cardId of cardIds) {
       try {
@@ -42,9 +54,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           where: { id: cardId },
           data: { available: false },
         });
-        console.log(`Card ${cardId} marked as unavailable:`, updatedCard.id);
+        console.log(`✅ Card ${cardId} marked as unavailable:`, updatedCard.id);
       } catch (error: any) {
-        console.error(`Failed to update card ${cardId}`, {
+        console.error(`❌ Failed to update card ${cardId}`, {
           code: error.code,
           message: error.message,
         });
