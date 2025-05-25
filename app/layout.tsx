@@ -1,23 +1,25 @@
-// app/layout.tsx
 import { ClerkProvider } from '@clerk/nextjs';
-import Navbar from '@/components/Navbar'; // Assuming your Navbar is in src/components or components
-import { CartProvider } from '@/components/CartProvider'; // Assuming CartProvider is in src/components or components
-import './globals.css'; // Your global styles
+import Navbar from '@/components/Navbar';
+import { CartProvider } from '@/components/CartProvider';
+import './globals.css';
 
-export const metadata = { // Example metadata - customize as needed
+export const metadata = {
   title: 'GAY RETRO TCG',
   description: 'Your one-stop shop for Gay Retro Trading Cards!',
+  icons: {
+    icon: '/favicon.ico',
+  },
+  // ...other metadata...
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body> {/* BODY tag is a direct child of HTML */}
+      <body>
         <ClerkProvider>
           <CartProvider>
             <Navbar />
-            <main>{children}</main> {/* Page content will be rendered here */}
-            {/* You could add a global Footer component here if you have one */}
+            <main>{children}</main>
           </CartProvider>
         </ClerkProvider>
       </body>
