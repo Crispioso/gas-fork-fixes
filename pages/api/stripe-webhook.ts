@@ -1,69 +1,41 @@
+import { buffer } from 'micro';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import { PrismaClient } from '@prisma/client';
 
-// Top-level declaration for the secret key
-const secretKey = process.env.STRIPE_SECRET_KEY;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-04-30.basil' });
+const prisma = new PrismaClient();
+
+export const config = {
+  api: { bodyParser: false },
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method === 'POST') {
+    const sig = req.headers['stripe-signature'] as string;
+    const buf = await buffer(req);
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    } catch (err) {
+      return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const cardIds = session.metadata?.cardIds?.split(',') || [];
+      for (const cardId of cardIds) {
+        await prisma.card.update({
+          where: { id: cardId },
+          data: { available: false }, // or delete, or decrement quantity
+        });
+      }
+    }
+
+    res.status(200).json({ received: true });
+  } else {
     res.setHeader('Allow', 'POST');
-    return res.status(405).end('Method Not Allowed');
-  }
-
-  // Check for STRIPE_SECRET_KEY at the beginning of the handler
-  if (!secretKey) {
-    console.error("STRIPE_SECRET_KEY is not set or not available at runtime.");
-    return res.status(500).json({ error: 'Server configuration error: Stripe key missing.' });
-  }
-
-  // Initialize Stripe SDK here, inside the handler, after confirming the key
-  const stripe = new Stripe(secretKey, {
-    apiVersion: '2025-04-30.basil', // Use a recent stable API version
-    typescript: true, // Recommended for TypeScript projects
-  });
-
-  const { lineItems } = req.body;
-
-  if (!Array.isArray(lineItems) || lineItems.length === 0) {
-    return res.status(400).json({ error: 'Invalid or empty lineItems provided.' });
-  }
-
-  for (const item of lineItems) {
-    if (
-      !item.price_data ||
-      !item.price_data.currency ||
-      !item.price_data.product_data ||
-      !item.price_data.product_data.name ||
-      typeof item.price_data.unit_amount !== 'number' ||
-      typeof item.quantity !== 'number' || item.quantity < 1
-    ) {
-      console.error('Invalid line item structure:', item);
-      return res.status(400).json({ error: 'One or more line items have an invalid structure.' });
-    }
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      mode: 'payment',
-      success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/cart`,
-    });
-
-    if (session.url) {
-      res.status(200).json({ url: session.url });
-    } else {
-      console.error("Stripe session created but no URL was returned.");
-      res.status(500).json({ error: 'Failed to create checkout session: No URL returned.' });
-    }
-  } catch (err) {
-    const error = err as Stripe.errors.StripeError;
-    console.error('Stripe API Error:', error.message, 'Code:', error.code);
-    res.status(500).json({
-      error: 'Stripe error',
-      detail: error.message || 'An unexpected error occurred with Stripe.',
-      code: error.code,
-    });
+    res.status(405).end('Method Not Allowed');
   }
 }
