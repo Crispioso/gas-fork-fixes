@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
+// Top-level declaration for the secret key
 const secretKey = process.env.STRIPE_SECRET_KEY;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,14 +10,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end('Method Not Allowed');
   }
 
+  // Check for STRIPE_SECRET_KEY at the beginning of the handler
   if (!secretKey) {
     console.error("STRIPE_SECRET_KEY is not set or not available at runtime.");
     return res.status(500).json({ error: 'Server configuration error: Stripe key missing.' });
   }
 
+  // Initialize Stripe SDK here, inside the handler, after confirming the key
   const stripe = new Stripe(secretKey, {
-    apiVersion: '2025-04-30.basil',
-    typescript: true,
+    apiVersion: '2025-04-30.basil', // Use a recent stable API version
+    typescript: true, // Recommended for TypeScript projects
   });
 
   const { lineItems } = req.body;
@@ -32,27 +35,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       !item.price_data.product_data ||
       !item.price_data.product_data.name ||
       typeof item.price_data.unit_amount !== 'number' ||
-      typeof item.quantity !== 'number' || item.quantity < 1 ||
-      !item.cardId // Ensure cardId is present
+      typeof item.quantity !== 'number' || item.quantity < 1
     ) {
       console.error('Invalid line item structure:', item);
-      return res.status(400).json({ error: 'One or more line items have an invalid structure or missing cardId.' });
+      return res.status(400).json({ error: 'One or more line items have an invalid structure.' });
     }
   }
 
   try {
-    // Collect card IDs from line items
-    const cardIds = lineItems.map(item => item.cardId).join(',');
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
       success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/cart`,
-      metadata: {
-        cardIds, // e.g., "abc123,def456"
-      },
     });
 
     if (session.url) {
