@@ -34,6 +34,7 @@ export default function CartPage() {
         unit_amount: item.price, // Price in pence
       },
       quantity: item.quantity,
+      cardId: item.id,
     }));
 
     try {
