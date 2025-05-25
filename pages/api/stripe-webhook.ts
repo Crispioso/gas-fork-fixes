@@ -32,6 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const buf = await buffer(req);
   let event: Stripe.Event;
+  
+console.log("🔐 Using secret:", process.env.STRIPE_WEBHOOK_SECRET?.slice(0, 12)); // just the first part
 
   try {
     event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
