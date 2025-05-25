@@ -24,18 +24,18 @@ export default function CartPage() {
       return;
     }
 
-    const lineItems = cart.map(item => ({
-      price_data: {
-        currency: "gbp",
-        product_data: {
-          name: item.name,
-          images: [item.imageUrl],
-        },
-        unit_amount: item.price, // Price in pence
-      },
-      quantity: item.quantity,
-      cardId: item.id,
-    }));
+const lineItems = cart.map(item => ({
+  price_data: {
+    currency: "gbp",
+    product_data: {
+      name: item.name,
+      images: [item.imageUrl],
+    },
+    unit_amount: item.price, // Price in pence
+  },
+  quantity: item.quantity,
+  cardId: item.id, // Keep this!
+}));
 
     try {
       const res = await fetch("/api/checkout", {

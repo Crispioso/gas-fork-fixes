@@ -26,10 +26,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const session = event.data.object as Stripe.Checkout.Session;
       const cardIds = session.metadata?.cardIds?.split(',') || [];
       for (const cardId of cardIds) {
-        await prisma.card.update({
-          where: { id: cardId },
-          data: { available: false }, // or delete, or decrement quantity
-        });
+        try {
+          await prisma.card.update({
+            where: { id: cardId },
+            data: { available: false },
+          });
+        } catch (error) {
+          console.error("Failed to update card", cardId, error);
+        }
       }
     }
 
