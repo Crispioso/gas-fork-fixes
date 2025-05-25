@@ -1,3 +1,4 @@
+// filepath: c:\dev\gay-reto-tcg\pages\api\stripe-webhook.ts
 import { buffer } from 'micro';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
@@ -22,17 +23,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
     }
 
+    console.log("Received event:", event); // Add this line
+
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const cardIds = session.metadata?.cardIds?.split(',') || [];
+      console.log("cardIds from metadata:", cardIds); // Add this line
+
       for (const cardId of cardIds) {
         try {
-          await prisma.card.update({
+          const updatedCard = await prisma.card.update({
             where: { id: cardId },
             data: { available: false },
           });
-        } catch (error) {
+          console.log(`Card ${cardId} updated successfully:`, updatedCard); // Add this line
+        } catch (error: any) {
           console.error("Failed to update card", cardId, error);
+          console.error("Prisma error code:", error.code); // Add this line
+          console.error("Prisma error message:", error.message); // Add this line
         }
       }
     }
