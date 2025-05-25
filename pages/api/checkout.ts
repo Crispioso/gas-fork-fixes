@@ -45,7 +45,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cardIds = lineItems.map(item => item.cardId).join(',');
 
     // Remove cardId from lineItems before sending to Stripe
-    const stripeLineItems = lineItems.map(({ cardId, ...item }) => item);
+const stripeLineItems = lineItems.map(({ cardId, ...item }) => {
+  return {
+    ...item,
+    price_data: {
+      ...item.price_data,
+      product_data: {
+        ...item.price_data.product_data,
+        metadata: {
+          ...(item.price_data.product_data.metadata || {}),
+          cardId, // 👈 move it into metadata
+        }
+      }
+    }
+  };
+});
+
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
