@@ -12,42 +12,45 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const sig = req.headers['stripe-signature'] as string;
-    const buf = await buffer(req);
-    let event: Stripe.Event;
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
+  }
 
-    try {
-      event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-    } catch (err) {
-      return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
-    }
+  const sig = req.headers['stripe-signature'] as string;
+  const buf = await buffer(req);
+  let event: Stripe.Event;
 
-    console.log("Received event:", event); // Add this line
+  try {
+    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch (err) {
+    console.error("Invalid Stripe signature:", (err as Error).message);
+    return res.status(400).send(`Webhook Error: ${(err as Error).message}`);
+  }
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const cardIds = session.metadata?.cardIds?.split(',') || [];
-      console.log("cardIds from metadata:", cardIds); // Add this line
+  console.log("Received event:", event.type);
 
-      for (const cardId of cardIds) {
-        try {
-          const updatedCard = await prisma.card.update({
-            where: { id: cardId },
-            data: { available: false },
-          });
-          console.log(`Card ${cardId} updated successfully:`, updatedCard); // Add this line
-        } catch (error: any) {
-          console.error("Failed to update card", cardId, error);
-          console.error("Prisma error code:", error.code); // Add this line
-          console.error("Prisma error message:", error.message); // Add this line
-        }
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const cardIds = session.metadata?.cardIds?.split(',') || [];
+
+    console.log("cardIds from metadata:", cardIds);
+
+    for (const cardId of cardIds) {
+      try {
+        const updatedCard = await prisma.card.update({
+          where: { id: cardId },
+          data: { available: false },
+        });
+        console.log(`Card ${cardId} marked as unavailable:`, updatedCard.id);
+      } catch (error: any) {
+        console.error(`Failed to update card ${cardId}`, {
+          code: error.code,
+          message: error.message,
+        });
       }
     }
-
-    res.status(200).json({ received: true });
-  } else {
-    res.setHeader('Allow', 'POST');
-    res.status(405).end('Method Not Allowed');
   }
+
+  res.status(200).json({ received: true });
 }

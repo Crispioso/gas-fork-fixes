@@ -91,14 +91,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else if (req.method === 'GET') {
     // Your existing GET logic to fetch cards
     try {
-      const cards = await prisma.card.findMany({
-        include: {
-          images: true, // Make sure to include images when fetching cards
-        },
-        orderBy: {
-          createdAt: 'desc' // Example ordering
-        }
-      });
+     const cards = await prisma.card.findMany({
+  where: { available: true }, // 🔥 this line filters out sold cards
+  include: {
+    images: true,
+  },
+  orderBy: {
+    createdAt: 'desc',
+  },
+});
+
       return res.status(200).json(cards);
     } catch (error: any) {
       console.error('Failed to fetch cards:', error);
