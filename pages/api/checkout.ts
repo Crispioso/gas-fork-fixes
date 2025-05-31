@@ -1,7 +1,9 @@
+// pages/api/checkout.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import Stripe from 'stripe';
 
-const secretKey = process.env.STRIPE_SECRET_KEY;
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID!;
+const PAYPAL_SECRET = process.env.PAYPAL_SECRET!;
+const BASE_URL = process.env.PAYPAL_BASE_URL || "https://api-m.paypal.com"; // Live PayPal URL
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -9,83 +11,76 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end('Method Not Allowed');
   }
 
-  if (!secretKey) {
-    console.error("STRIPE_SECRET_KEY is not set or not available at runtime.");
-    return res.status(500).json({ error: 'Server configuration error: Stripe key missing.' });
-  }
-
-  const stripe = new Stripe(secretKey, {
-    apiVersion: '2025-04-30.basil',
-    typescript: true,
-  });
-
-  let { lineItems } = req.body; // Use let so we can modify it
+  const { lineItems } = req.body;
 
   if (!Array.isArray(lineItems) || lineItems.length === 0) {
     return res.status(400).json({ error: 'Invalid or empty lineItems provided.' });
   }
 
-  for (const item of lineItems) {
-    if (
-      !item.price_data ||
-      !item.price_data.currency ||
-      !item.price_data.product_data ||
-      !item.price_data.product_data.name ||
-      typeof item.price_data.unit_amount !== 'number' ||
-      typeof item.quantity !== 'number' || item.quantity < 1 ||
-      !item.cardId // Ensure cardId is present
-    ) {
-      console.error('Invalid line item structure:', item);
-      return res.status(400).json({ error: 'One or more line items have an invalid structure or missing cardId.' });
-    }
-  }
+  const totalAmount = lineItems.reduce((sum, item) => sum + item.price_data.unit_amount * item.quantity, 0);
+  const cardIds = lineItems.map(item => item.cardId).join(',');
 
   try {
-    // Collect card IDs from line items
-    const cardIds = lineItems.map(item => item.cardId).join(',');
+    const auth = await getPayPalAccessToken();
 
-    // Remove cardId from lineItems before sending to Stripe
-const stripeLineItems = lineItems.map(({ cardId, ...item }) => {
-  return {
-    ...item,
-    price_data: {
-      ...item.price_data,
-      product_data: {
-        ...item.price_data.product_data,
-        metadata: {
-          ...(item.price_data.product_data.metadata || {}),
-          cardId, // 👈 move it into metadata
-        }
-      }
-    }
-  };
-});
-
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: stripeLineItems, // Use the modified line items
-      mode: 'payment',
-      success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/cart`,
-      metadata: {
-        cardIds, // e.g., "abc123,def456"
+    const orderRes = await fetch(`${BASE_URL}/v2/checkout/orders`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [{
+          amount: {
+            currency_code: "GBP",
+            value: (totalAmount / 100).toFixed(2),
+          },
+          custom_id: cardIds,
+        }],
+        application_context: {
+          return_url: `${req.headers.origin}/success`,
+          cancel_url: `${req.headers.origin}/cart`,
+        },
+      }),
     });
 
-    if (session.url) {
-      res.status(200).json({ url: session.url });
-    } else {
-      console.error("Stripe session created but no URL was returned.");
-      res.status(500).json({ error: 'Failed to create checkout session: No URL returned.' });
+    const orderData = await orderRes.json();
+
+    if (!orderData || !orderData.links) {
+      return res.status(500).json({ error: 'Failed to create PayPal order' });
     }
-  } catch (err) {
-    const error = err as Stripe.errors.StripeError;
-    console.error('Stripe API Error:', error.message, 'Code:', error.code);
-    res.status(500).json({
-      error: 'Stripe error',
-      detail: error.message || 'An unexpected error occurred with Stripe.',
-      code: error.code,
-    });
+
+    const approvalLink = orderData.links.find((link: any) => link.rel === 'approve')?.href;
+    if (!approvalLink) {
+      return res.status(500).json({ error: 'Approval URL not found in PayPal response' });
+    }
+
+    return res.status(200).json({ url: approvalLink });
+
+  } catch (err: any) {
+    console.error("PayPal Checkout Error:", err);
+    return res.status(500).json({ error: 'Internal Server Error', detail: err.message });
   }
+}
+
+async function getPayPalAccessToken() {
+  const credentials = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET}`).toString('base64');
+
+  const response = await fetch(`${BASE_URL}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  const data = await response.json();
+
+  if (!data.access_token) {
+    throw new Error("Failed to obtain PayPal access token");
+  }
+
+  return data.access_token;
 }

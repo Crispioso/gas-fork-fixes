@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from '../styles/CartPage.module.css'; // Adjust path if you place it in app/styles/
 
-const MINIMUM_SPEND_PENCE = 30; // Stripe's minimum is 30p for GBP
+const MINIMUM_SPEND_PENCE = 30; // PayPal: Minimum 30p if enforced manually
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -19,23 +19,22 @@ export default function CartPage() {
 
   async function handleCheckout() {
     if (isBelowMinimumSpend) {
-      // This alert is a fallback, the button should be disabled.
       alert(`Minimum spend is £${(MINIMUM_SPEND_PENCE / 100).toFixed(2)}.`);
       return;
     }
 
-const lineItems = cart.map(item => ({
-  price_data: {
-    currency: "gbp",
-    product_data: {
-      name: item.name,
-      images: [item.imageUrl],
-    },
-    unit_amount: item.price, // Price in pence
-  },
-  quantity: item.quantity,
-  cardId: item.id, // Keep this!
-}));
+    const lineItems = cart.map(item => ({
+      price_data: {
+        currency: "GBP",
+        product_data: {
+          name: item.name,
+          images: [item.imageUrl],
+        },
+        unit_amount: item.price, // Price in pence
+      },
+      quantity: item.quantity,
+      cardId: item.id,
+    }));
 
     try {
       const res = await fetch("/api/checkout", {
@@ -45,9 +44,9 @@ const lineItems = cart.map(item => ({
       });
       const { url } = await res.json();
       if (url) {
-        router.push(url);
+        window.location.href = url;
       } else {
-        alert("Failed to create checkout session.");
+        alert("Failed to create PayPal order.");
       }
     } catch (error) {
       console.error("Checkout error:", error);
@@ -149,7 +148,7 @@ const lineItems = cart.map(item => ({
           className={styles.checkoutButton}
           disabled={isBelowMinimumSpend} 
         >
-          Proceed to Checkout
+          Proceed to Checkout with PayPal
         </button>
         <button
           onClick={clearCart}
