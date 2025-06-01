@@ -6,78 +6,71 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
+    const requiredHeaders = [
+      'paypal-auth-algo',
+      'paypal-cert-url',
+      'paypal-transmission-id',
+      'paypal-transmission-sig',
+      'paypal-transmission-time',
+    ];
+
+    const missing = requiredHeaders.filter(h => !req.headers.get(h));
+    if (missing.length) {
+      console.error("❌ Missing required PayPal headers:", missing);
+      return new Response('Missing required PayPal headers', { status: 400 });
+    }
+
     const rawBody = await req.arrayBuffer();
     const bodyBuffer = Buffer.from(rawBody);
+    const webhookId = process.env.PAYPAL_WEBHOOK_ID!;
+    const authAlgo = req.headers.get('paypal-auth-algo')!;
+    const certUrl = req.headers.get('paypal-cert-url')!;
+    const transmissionId = req.headers.get('paypal-transmission-id')!;
+    const transmissionSig = req.headers.get('paypal-transmission-sig')!;
+    const transmissionTime = req.headers.get('paypal-transmission-time')!;
 
-    const headers = {
-      authAlgo: req.headers.get('paypal-auth-algo'),
-      certUrl: req.headers.get('paypal-cert-url'),
-      transmissionId: req.headers.get('paypal-transmission-id'),
-      transmissionSig: req.headers.get('paypal-transmission-sig'),
-      transmissionTime: req.headers.get('paypal-transmission-time'),
-    };
-
-    const missing = Object.entries(headers).filter(([_, v]) => !v);
-    if (missing.length > 0) {
-      console.error("Missing PayPal headers:", missing.map(([k]) => k).join(', '));
-      return new Response("Missing headers", { status: 400 });
-    }
-
-    const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-    const clientId = process.env.PAYPAL_CLIENT_ID;
-    const secret = process.env.PAYPAL_SECRET;
-    const apiBase = process.env.PAYPAL_API_BASE;
-
-    if (!webhookId || !clientId || !secret || !apiBase) {
-      console.error("Missing PayPal env vars");
-      return new Response("Server misconfigured", { status: 500 });
-    }
-
-    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+    const accessTokenRes = await fetch(`${process.env.PAYPAL_API_BASE}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        Authorization: 'Basic ' + Buffer.from(`${clientId}:${secret}`).toString('base64'),
+        Authorization: 'Basic ' + Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`).toString('base64'),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
     });
 
-    const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) {
-      console.error("Failed to get access token:", tokenData);
-      return new Response("Failed to get access token", { status: 500 });
-    }
-
+    const { access_token } = await accessTokenRes.json();
     const event = JSON.parse(bodyBuffer.toString());
 
-    const verifyRes = await fetch(`${apiBase}/v1/notifications/verify-webhook-signature`, {
+    const verificationRes = await fetch(`${process.env.PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${tokenData.access_token}`,
+        Authorization: `Bearer ${access_token}`,
       },
       body: JSON.stringify({
-        auth_algo: headers.authAlgo,
-        cert_url: headers.certUrl,
-        transmission_id: headers.transmissionId,
-        transmission_sig: headers.transmissionSig,
-        transmission_time: headers.transmissionTime,
+        auth_algo: authAlgo,
+        cert_url: certUrl,
+        transmission_id: transmissionId,
+        transmission_sig: transmissionSig,
+        transmission_time: transmissionTime,
         webhook_id: webhookId,
         webhook_event: event,
       }),
     });
 
-    const verifyData = await verifyRes.json();
-    if (verifyData.verification_status !== 'SUCCESS') {
-      console.error("❌ Webhook not verified:", verifyData);
-      return new Response("Webhook verification failed", { status: 400 });
+    const verification = await verificationRes.json();
+    if (verification.verification_status !== 'SUCCESS') {
+      console.error("Failed PayPal webhook verification:", verification);
+      return new Response('Webhook verification failed', { status: 400 });
     }
 
     if (event.event_type === 'CHECKOUT.ORDER.APPROVED') {
-      const customId = event.resource?.purchase_units?.[0]?.custom_id;
+      const purchaseUnits = event.resource?.purchase_units;
+      const customId = purchaseUnits?.[0]?.custom_id;
+
       if (!customId) {
-        console.warn("Missing custom_id in webhook");
-        return new Response("Missing custom_id", { status: 400 });
+        console.warn("⚠️ custom_id missing in PayPal webhook:", JSON.stringify(event, null, 2));
+        return new Response('Missing custom_id', { status: 400 });
       }
 
       const cardIds = customId.split(',');
@@ -88,17 +81,16 @@ export async function POST(req: NextRequest) {
             where: { id: cardId },
             data: { available: false },
           });
-          console.log(`✅ Card ${cardId} marked as unavailable`);
-        } catch (err) {
-          console.error(`❌ DB update failed for card ${cardId}`, err);
+          console.log(`✅ Marked card ${cardId} as unavailable`);
+        } catch (error) {
+          console.error(`❌ Failed to update card ${cardId}`, error);
         }
       }
     }
 
-    return new Response("OK", { status: 200 });
-
-  } catch (err) {
-    console.error("💥 Webhook error:", err);
-    return new Response("Internal error", { status: 500 });
+    return new Response('Webhook received', { status: 200 });
+  } catch (error) {
+    console.error("Webhook handler error:", error);
+    return new Response('Internal Server Error', { status: 500 });
   }
 }
