@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
 
     const rawBody = await req.arrayBuffer();
     const bodyBuffer = Buffer.from(rawBody);
+    const event = JSON.parse(bodyBuffer.toString()); // 👈 move this up here
+
     const webhookId = process.env.PAYPAL_WEBHOOK_ID!;
     const authAlgo = req.headers.get('paypal-auth-algo')!;
     const certUrl = req.headers.get('paypal-cert-url')!;
@@ -39,7 +41,16 @@ export async function POST(req: NextRequest) {
     });
 
     const { access_token } = await accessTokenRes.json();
-    const event = JSON.parse(bodyBuffer.toString());
+
+    console.log("Sending to PayPal verification:", JSON.stringify({
+      auth_algo: authAlgo,
+      cert_url: certUrl,
+      transmission_id: transmissionId,
+      transmission_sig: transmissionSig,
+      transmission_time: transmissionTime,
+      webhook_id: webhookId,
+      webhook_event: event,
+    }, null, 2));
 
     const verificationRes = await fetch(`${process.env.PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
@@ -60,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     const verification = await verificationRes.json();
     if (verification.verification_status !== 'SUCCESS') {
-      console.error("Failed PayPal webhook verification:", verification);
+      console.error("❌ Failed PayPal webhook verification:", verification);
       return new Response('Webhook verification failed', { status: 400 });
     }
 
