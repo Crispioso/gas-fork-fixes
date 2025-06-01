@@ -1,26 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "./CartProvider";
 
 export default function CardItem({ card }: { card: any }) {
-  const { addToCart } = useCart();
+  const { addToCart, cart } = useCart();
   const [added, setAdded] = useState(false);
+  const [alreadyInCart, setAlreadyInCart] = useState(false);
+
+  useEffect(() => {
+    const exists = cart.some((item) => item.id === card.id);
+    setAlreadyInCart(exists);
+  }, [cart, card.id]);
 
   function handleAddToCart() {
-    // Ensure the card object includes cardId for checkout
+    if (alreadyInCart) return;
     addToCart({ ...card, cardId: card.id });
     setAdded(true);
     setTimeout(() => setAdded(false), 900);
   }
 
   return (
-    <div
-      className="bg-black border-4 border-neonPink rounded-2xl shadow-lg p-4 flex flex-col items-center relative hover:scale-110 transition-transform duration-200 ease-in-out"
-    >
-      <img
-        src={card.imageUrl}
-        alt={card.name}
-        className="card-img"
-      />
+    <div className="bg-black border-4 border-neonPink rounded-2xl shadow-lg p-4 flex flex-col items-center relative hover:scale-110 transition-transform duration-200 ease-in-out">
+      <img src={card.imageUrl} alt={card.name} className="card-img" />
       <div className="font-['Press_Start_2P',monospace] text-lg text-neonCyan mb-2 text-center">
         {card.name}
       </div>
@@ -29,9 +29,14 @@ export default function CardItem({ card }: { card: any }) {
       </div>
       <button
         onClick={handleAddToCart}
-        className="px-4 py-2 bg-neonGreen text-black font-bold rounded-full hover:bg-neonPink hover:text-white border-2 border-neonCyan transition"
+        className={`px-4 py-2 font-bold rounded-full border-2 transition ${
+          alreadyInCart
+            ? "bg-gray-500 text-white cursor-not-allowed"
+            : "bg-neonGreen text-black hover:bg-neonPink hover:text-white border-neonCyan"
+        }`}
+        disabled={alreadyInCart}
       >
-        {added ? "Added!" : "Add to Cart"}
+        {alreadyInCart ? "In Cart" : added ? "Added!" : "Add to Cart"}
       </button>
     </div>
   );
