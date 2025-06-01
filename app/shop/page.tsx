@@ -4,7 +4,7 @@ import { useCart } from "@/components/CartProvider";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from '../styles/ShopPage.module.css';
-import { useState, useEffect, useCallback } from "react"; // Added useCallback
+import { useState, useEffect, useCallback } from "react";
 import useSWR from "swr";
 
 interface ImageType {
@@ -28,20 +28,19 @@ export default function ShopPage() {
   const router = useRouter();
 
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
-  
-  // State for modal
+  const [search, setSearch] = useState("");
+
   const [selectedImagesForModal, setSelectedImagesForModal] = useState<ImageType[] | null>(null);
   const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // State to track current image index for each card on the shop page
   const [currentCardImageIndexes, setCurrentCardImageIndexes] = useState<{ [cardId: string]: number }>({});
 
   const handleAddToCart = (card: CardItemType) => {
     const currentImageIndex = currentCardImageIndexes[card.id] || 0;
     const itemToAdd = {
-        ...card,
-        imageUrl: card.images && card.images.length > 0 ? card.images[currentImageIndex].url : "/placeholder.png"
+      ...card,
+      imageUrl: card.images && card.images.length > 0 ? card.images[currentImageIndex].url : "/placeholder.png"
     };
     const itemAlreadyInCart = cart.some(cartItem => cartItem.id === card.id);
     if (!itemAlreadyInCart) {
@@ -93,7 +92,7 @@ export default function ShopPage() {
       return { ...prevIndexes, [cardId]: newIndex };
     });
   };
-  
+
   const changeModalImage = (direction: 'next' | 'prev') => {
     if (!selectedImagesForModal) return;
     setCurrentModalImageIndex(prevIndex => {
@@ -107,13 +106,10 @@ export default function ShopPage() {
     });
   };
 
-
   if (cardsError) return <div className="error-message">Failed to load cards. (Error: {cardsError.message})</div>;
   if (!cards) return <div className="loading-message">Loading cards…</div>;
 
-  const shopTitleClass = "shop-title";
-  const cardGridClass = "card-grid";
-  const addToCartButtonClass = "shop-btn";
+  const filteredCards = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <main>
@@ -129,15 +125,36 @@ export default function ShopPage() {
 
       <div className={styles.pageContentContainer}>
         <br />
-        <div className={cardGridClass}>
-          {cards.map((card: CardItemType) => {
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <input
+            type="text"
+            placeholder="Search cards..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: '100%',
+              maxWidth: '300px',
+              padding: '0.5rem 1rem',
+              borderRadius: '9999px',
+              
+              outline: 'none',
+              color: 'white',
+              textAlign: 'center',
+              
+              fontWeight: 'bold',
+              backgroundColor: '#374151',
+            }}
+          />
+        </div>
+        <div className="card-grid">
+          {filteredCards.map((card: CardItemType) => {
             const isInCart = cart.some(cartItem => cartItem.id === card.id && cartItem.quantity > 0);
             const currentImageIndexOnCard = currentCardImageIndexes[card.id] || 0;
             const displayImageUrl = card.images && card.images.length > 0 ? card.images[currentImageIndexOnCard].url : "/placeholder.png";
 
             return (
               <div key={card.id} className={styles.productCard}>
-                <div className={styles.productImageWrapper}> {/* New wrapper for image and nav buttons */}
+                <div className={styles.productImageWrapper}>
                   {card.images && card.images.length > 1 && (
                     <button
                       onClick={() => changeCardImage(card.id, 'prev', card.images.length)}
@@ -152,7 +169,7 @@ export default function ShopPage() {
                     className={styles.productImageContainer}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openModal(card.images, currentImageIndexOnCard)}}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openModal(card.images, currentImageIndexOnCard) }}
                   >
                     <Image
                       src={displayImageUrl}
@@ -183,7 +200,7 @@ export default function ShopPage() {
                 <div className={styles.addToCartButtonContainer}>
                   <button
                     onClick={() => !isInCart && handleAddToCart(card)}
-                    className={`${addToCartButtonClass} ${isInCart ? styles.inCartButtonDark : ''}`}
+                    className={`shop-btn ${isInCart ? styles.inCartButtonDark : ''}`}
                     disabled={isInCart}
                   >
                     {isInCart ? "In Cart" : "Add to Cart"}
@@ -207,13 +224,13 @@ export default function ShopPage() {
               &times;
             </button>
             {selectedImagesForModal.length > 1 && (
-                 <button
-                    onClick={() => changeModalImage('prev')}
-                    className={`${styles.imageNavButton} ${styles.modalImageNavPrev}`}
-                    aria-label="Previous image in modal"
-                >
-                    &lt;
-                </button>
+              <button
+                onClick={() => changeModalImage('prev')}
+                className={`${styles.imageNavButton} ${styles.modalImageNavPrev}`}
+                aria-label="Previous image in modal"
+              >
+                &lt;
+              </button>
             )}
             <Image
               src={selectedImagesForModal[currentModalImageIndex].url}
@@ -223,20 +240,20 @@ export default function ShopPage() {
               style={{ imageRendering: "pixelated", objectFit: 'contain', maxHeight: '85vh', maxWidth: '80vw' }}
             />
             {selectedImagesForModal.length > 1 && (
-                 <button
-                    onClick={() => changeModalImage('next')}
-                    className={`${styles.imageNavButton} ${styles.modalImageNavNext}`}
-                    aria-label="Next image in modal"
-                >
-                    &gt;
-                </button>
+              <button
+                onClick={() => changeModalImage('next')}
+                className={`${styles.imageNavButton} ${styles.modalImageNavNext}`}
+                aria-label="Next image in modal"
+              >
+                &gt;
+              </button>
             )}
           </div>
-           {selectedImagesForModal.length > 1 && (
+          {selectedImagesForModal.length > 1 && (
             <div className={styles.modalImageCounter}>
-                {currentModalImageIndex + 1} / {selectedImagesForModal.length}
+              {currentModalImageIndex + 1} / {selectedImagesForModal.length}
             </div>
-            )}
+          )}
         </div>
       )}
     </main>
