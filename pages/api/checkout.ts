@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID!;
 const PAYPAL_SECRET = process.env.PAYPAL_SECRET!;
-const BASE_URL = process.env.PAYPAL_BASE_URL || "https://api-m.paypal.com"; // Live PayPal URL
+const BASE_URL = process.env.PAYPAL_API_BASE || "https://api-m.paypal.com"; // Live PayPal URL
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

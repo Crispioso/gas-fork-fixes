@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     const rawBody = await req.arrayBuffer();
     const bodyBuffer = Buffer.from(rawBody);
-    const event = JSON.parse(bodyBuffer.toString()); // 👈 move this up here
+    const event = JSON.parse(bodyBuffer.toString());
 
     const webhookId = process.env.PAYPAL_WEBHOOK_ID!;
     const authAlgo = req.headers.get('paypal-auth-algo')!;
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     const verification = await verificationRes.json();
     if (verification.verification_status !== 'SUCCESS') {
-      console.error("❌ Failed PayPal webhook verification:", verification);
+      console.error("Failed PayPal webhook verification:", verification);
       return new Response('Webhook verification failed', { status: 400 });
     }
 
