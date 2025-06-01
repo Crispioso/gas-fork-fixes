@@ -271,4 +271,3 @@ export default function AdminUpload() {
     </form>
   );
 }
-//
