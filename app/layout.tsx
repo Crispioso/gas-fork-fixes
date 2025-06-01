@@ -7,7 +7,7 @@ export const metadata = {
   title: 'GAY RETRO TCG',
   description: 'Your one-stop shop for Gay Retro Trading Cards!',
   icons: {
-    icon: './favicon.ico',
+    icon: './favicon.png',
   },
   // ...other metadata...
 };
