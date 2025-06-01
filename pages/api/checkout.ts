@@ -76,10 +76,23 @@ async function getPayPalAccessToken() {
     body: 'grant_type=client_credentials',
   });
 
-  const data = await response.json();
+  const text = await response.text(); // capture raw text first for debugging
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    console.error("PayPal token response not JSON:", text);
+    throw new Error("PayPal token response was not valid JSON");
+  }
+
+  if (!response.ok) {
+    console.error("PayPal token fetch failed:", response.status, data);
+    throw new Error(data.error_description || "Failed to obtain PayPal access token");
+  }
 
   if (!data.access_token) {
-    throw new Error("Failed to obtain PayPal access token");
+    console.error("No access_token in response:", data);
+    throw new Error("PayPal token response missing access_token");
   }
 
   return data.access_token;
