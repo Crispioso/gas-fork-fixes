@@ -23,7 +23,7 @@ export default function CartToast({ visible, itemName, onHide }: CartToastProps)
     <div
       style={{
         position: "fixed",
-        top: "1rem",
+        top: "4rem",
         right: "1rem",
         backgroundColor: "#FF2B42",
         color: "#000",
