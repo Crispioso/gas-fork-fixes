@@ -1,9 +1,11 @@
 // app/shop/page.tsx
 "use client";
+
 import { useCart } from "@/components/CartProvider";
+import CartToast from "@/components/CartToast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import styles from '../styles/ShopPage.module.css';
+import styles from "../styles/ShopPage.module.css";
 import { useState, useEffect, useCallback } from "react";
 import useSWR from "swr";
 
@@ -28,7 +30,8 @@ export default function ShopPage() {
   const router = useRouter();
 
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [lastAddedCard, setLastAddedCard] = useState<{ name: string } | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
 
   const [selectedImagesForModal, setSelectedImagesForModal] = useState<ImageType[] | null>(null);
   const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
@@ -38,17 +41,20 @@ export default function ShopPage() {
 
   const handleAddToCart = (card: CardItemType) => {
     const currentImageIndex = currentCardImageIndexes[card.id] || 0;
+    const imageUrl = card.images?.[currentImageIndex]?.url || "/placeholder.png";
+
     const itemToAdd = {
       ...card,
-      imageUrl: card.images && card.images.length > 0 ? card.images[currentImageIndex].url : "/placeholder.png"
+      imageUrl,
     };
+
     const itemAlreadyInCart = cart.some(cartItem => cartItem.id === card.id);
     if (!itemAlreadyInCart) {
       addToCart(itemToAdd);
       setAddedItemId(card.id);
-      setTimeout(() => {
-        setAddedItemId(null);
-      }, 2000);
+      setLastAddedCard({ name: card.name });
+      setShowNotification(true);
+      setTimeout(() => setAddedItemId(null), 2000);
     }
   };
 
@@ -68,27 +74,16 @@ export default function ShopPage() {
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeModal();
-      }
+      if (event.key === 'Escape') closeModal();
     };
-    if (isModalOpen) {
-      window.addEventListener('keydown', handleEsc);
-    }
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-    };
+    if (isModalOpen) window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [isModalOpen, closeModal]);
 
   const changeCardImage = (cardId: string, direction: 'next' | 'prev', totalImages: number) => {
     setCurrentCardImageIndexes(prevIndexes => {
       const currentIndex = prevIndexes[cardId] || 0;
-      let newIndex;
-      if (direction === 'next') {
-        newIndex = (currentIndex + 1) % totalImages;
-      } else {
-        newIndex = (currentIndex - 1 + totalImages) % totalImages;
-      }
+      let newIndex = direction === 'next' ? (currentIndex + 1) % totalImages : (currentIndex - 1 + totalImages) % totalImages;
       return { ...prevIndexes, [cardId]: newIndex };
     });
   };
@@ -96,20 +91,15 @@ export default function ShopPage() {
   const changeModalImage = (direction: 'next' | 'prev') => {
     if (!selectedImagesForModal) return;
     setCurrentModalImageIndex(prevIndex => {
-      let newIndex;
-      if (direction === 'next') {
-        newIndex = (prevIndex + 1) % selectedImagesForModal.length;
-      } else {
-        newIndex = (prevIndex - 1 + selectedImagesForModal.length) % selectedImagesForModal.length;
-      }
+      const newIndex = direction === 'next'
+        ? (prevIndex + 1) % selectedImagesForModal.length
+        : (prevIndex - 1 + selectedImagesForModal.length) % selectedImagesForModal.length;
       return newIndex;
     });
   };
 
   if (cardsError) return <div className="error-message">Failed to load cards. (Error: {cardsError.message})</div>;
   if (!cards) return <div className="loading-message">Loading cards…</div>;
-
-  const filteredCards = cards.filter(card => card.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <main>
@@ -125,52 +115,19 @@ export default function ShopPage() {
 
       <div className={styles.pageContentContainer}>
         <br />
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <input
-            type="text"
-            placeholder="Search cards..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              maxWidth: '300px',
-              padding: '0.5rem 1rem',
-              borderRadius: '9999px',
-              
-              outline: 'none',
-              color: 'white',
-              textAlign: 'center',
-              
-              fontWeight: 'bold',
-              backgroundColor: '#374151',
-            }}
-          />
-        </div>
         <div className="card-grid">
-          {filteredCards.map((card: CardItemType) => {
+          {cards.map((card: CardItemType) => {
             const isInCart = cart.some(cartItem => cartItem.id === card.id && cartItem.quantity > 0);
             const currentImageIndexOnCard = currentCardImageIndexes[card.id] || 0;
-            const displayImageUrl = card.images && card.images.length > 0 ? card.images[currentImageIndexOnCard].url : "/placeholder.png";
+            const displayImageUrl = card.images?.[currentImageIndexOnCard]?.url || "/placeholder.png";
 
             return (
               <div key={card.id} className={styles.productCard}>
                 <div className={styles.productImageWrapper}>
-                  {card.images && card.images.length > 1 && (
-                    <button
-                      onClick={() => changeCardImage(card.id, 'prev', card.images.length)}
-                      className={`${styles.imageNavButton} ${styles.imageNavPrev}`}
-                      aria-label="Previous image"
-                    >
-                      &lt;
-                    </button>
+                  {card.images.length > 1 && (
+                    <button onClick={() => changeCardImage(card.id, 'prev', card.images.length)} className={`${styles.imageNavButton} ${styles.imageNavPrev}`}>&lt;</button>
                   )}
-                  <div
-                    onClick={() => openModal(card.images, currentImageIndexOnCard)}
-                    className={styles.productImageContainer}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openModal(card.images, currentImageIndexOnCard) }}
-                  >
+                  <div onClick={() => openModal(card.images, currentImageIndexOnCard)} className={styles.productImageContainer} role="button" tabIndex={0}>
                     <Image
                       src={displayImageUrl}
                       alt={card.name}
@@ -181,22 +138,12 @@ export default function ShopPage() {
                       priority={cards.indexOf(card) < 3}
                     />
                   </div>
-                  {card.images && card.images.length > 1 && (
-                    <button
-                      onClick={() => changeCardImage(card.id, 'next', card.images.length)}
-                      className={`${styles.imageNavButton} ${styles.imageNavNext}`}
-                      aria-label="Next image"
-                    >
-                      &gt;
-                    </button>
+                  {card.images.length > 1 && (
+                    <button onClick={() => changeCardImage(card.id, 'next', card.images.length)} className={`${styles.imageNavButton} ${styles.imageNavNext}`}>&gt;</button>
                   )}
                 </div>
-                <div className={styles.productName}>
-                  {card.name}
-                </div>
-                <div className={styles.productPrice}>
-                  £{(card.price / 100).toFixed(2)}
-                </div>
+                <div className={styles.productName}>{card.name}</div>
+                <div className={styles.productPrice}>£{(card.price / 100).toFixed(2)}</div>
                 <div className={styles.addToCartButtonContainer}>
                   <button
                     onClick={() => !isInCart && handleAddToCart(card)}
@@ -206,9 +153,7 @@ export default function ShopPage() {
                     {isInCart ? "In Cart" : "Add to Cart"}
                   </button>
                   {!isInCart && addedItemId === card.id && (
-                    <span className={styles.addedMessage}>
-                      Added!
-                    </span>
+                    <span className={styles.addedMessage}>Added!</span>
                   )}
                 </div>
               </div>
@@ -220,17 +165,9 @@ export default function ShopPage() {
       {isModalOpen && selectedImagesForModal && selectedImagesForModal.length > 0 && (
         <div className={styles.modalOverlay} onClick={closeModal} role="dialog" aria-modal="true">
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalCloseButton} onClick={closeModal} aria-label="Close image viewer">
-              &times;
-            </button>
+            <button className={styles.modalCloseButton} onClick={closeModal}>&times;</button>
             {selectedImagesForModal.length > 1 && (
-              <button
-                onClick={() => changeModalImage('prev')}
-                className={`${styles.imageNavButton} ${styles.modalImageNavPrev}`}
-                aria-label="Previous image in modal"
-              >
-                &lt;
-              </button>
+              <button onClick={() => changeModalImage('prev')} className={`${styles.imageNavButton} ${styles.modalImageNavPrev}`}>&lt;</button>
             )}
             <Image
               src={selectedImagesForModal[currentModalImageIndex].url}
@@ -240,21 +177,19 @@ export default function ShopPage() {
               style={{ imageRendering: "pixelated", objectFit: 'contain', maxHeight: '85vh', maxWidth: '80vw' }}
             />
             {selectedImagesForModal.length > 1 && (
-              <button
-                onClick={() => changeModalImage('next')}
-                className={`${styles.imageNavButton} ${styles.modalImageNavNext}`}
-                aria-label="Next image in modal"
-              >
-                &gt;
-              </button>
+              <button onClick={() => changeModalImage('next')} className={`${styles.imageNavButton} ${styles.modalImageNavNext}`}>&gt;</button>
             )}
           </div>
-          {selectedImagesForModal.length > 1 && (
-            <div className={styles.modalImageCounter}>
-              {currentModalImageIndex + 1} / {selectedImagesForModal.length}
-            </div>
-          )}
+          <div className={styles.modalImageCounter}>{currentModalImageIndex + 1} / {selectedImagesForModal.length}</div>
         </div>
+      )}
+
+      {lastAddedCard && (
+        <CartToast
+          visible={showNotification}
+          itemName={lastAddedCard.name}
+          onHide={() => setShowNotification(false)}
+        />
       )}
     </main>
   );
