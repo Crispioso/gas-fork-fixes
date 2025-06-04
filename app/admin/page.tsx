@@ -1,210 +1,43 @@
 // app/admin/page.tsx
-"use client";
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import AdminUploadForm from '@/components/AdminUploadForm'; // Assuming AdminUploadForm.tsx is in src/components/
 
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, FormEvent } from "react";
-import styles from '../styles/AdminPage.module.css';
-import Image from "next/image";
+export default async function AdminPage() {
+  const { userId } = await auth(); // Gets session information.
+                           // Middleware should have already redirected if not authenticated.
 
-interface PokemonTCGCardImage {
-  small: string;
-  large: string;
-}
-
-interface PokemonTCGCard {
-  id: string;
-  name: string;
-  images: PokemonTCGCardImage;
-}
-
-interface PokemonTCGApiResponse {
-  data: PokemonTCGCard[];
-  page: number;
-  pageSize: number;
-  count: number;
-  totalCount: number;
-}
-
-interface SelectedImageDetail {
-  url: string;
-  publicId?: string;
-  source: 'upload' | 'api';
-  apiCardName?: string;
-}
-
-export default function AdminUpload() {
-  const { user, isLoaded } = useUser();
-  const router = useRouter();
-  const [accessDenied, setAccessDenied] = useState(false);
-
-  const [name, setName] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
-  const [price, setPrice] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<PokemonTCGCard[]>([]);
-  const [selectedApiImages, setSelectedApiImages] = useState<SelectedImageDetail[]>([]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      if (!user) return; // Let unauthenticated users stay and sign in
-      const role = user.publicMetadata?.role;
-      if (role !== "admin") {
-        setAccessDenied(true);
-        router.push("/");
-      }
-    }
-  }, [user, isLoaded, router]);
-
-  if (!isLoaded) return <div>Loading...</div>;
-  if (accessDenied) return null;
-
-  async function handlePokemonSearch(e: FormEvent) {
-    e.preventDefault();
-    if (!searchTerm.trim()) {
-      setMessage("Please enter a Pokémon card name to search.");
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    setMessage(`Searching for "${searchTerm}"...`);
-    setSearchResults([]);
-
-    try {
-      const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:\"${encodeURIComponent(searchTerm)}*\"&pageSize=10`);
-      const data: PokemonTCGApiResponse = await response.json();
-      setSearchResults(data.data || []);
-      setMessage(data.data.length > 0 ? `${data.data.length} cards found.` : "No cards found.");
-    } catch (error: any) {
-      console.error("API error:", error);
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setIsSearching(false);
-    }
+  // Explicit check for userId, though middleware should cover unauthenticated access.
+  if (!userId) {
+    // This might be redundant if middleware correctly redirects to sign-in for /admin
+    // but serves as a fallback.
+    return redirect('/sign-in?redirect_url=' + encodeURIComponent('/admin'));
   }
 
-  const handleSelectApiImage = (card: PokemonTCGCard) => {
-    setSelectedApiImages(prev => [...prev, {
-      url: card.images.large,
-      source: 'api',
-      apiCardName: card.name
-    }]);
-    setMessage(`${card.name} image selected.`);
-  };
+  const user = await currentUser(); // Fetches the full user object for metadata
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!name || (!files && selectedApiImages.length === 0) || !price) {
-      setMessage("Name, price, and image required.");
-      return;
-    }
-    const priceInPence = Number(price);
-    if (isNaN(priceInPence) || priceInPence <= 0) {
-      setMessage("Price must be a positive number.");
-      return;
-    }
+  // Check for admin role using publicMetadata
+  // Ensure you have set `publicMetadata: { "role": "admin" }` for your admin users
+  // in your Clerk dashboard (Users -> select user -> Metadata -> Public metadata).
+  const isAdmin = user?.publicMetadata?.role === 'admin';
 
-    setUploading(true);
-    const finalImageDetails: { url: string; publicId?: string }[] = [];
-
-    try {
-      if (files) {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const imageFormData = new FormData();
-          imageFormData.append("file", file);
-          const uploadRes = await fetch("/api/upload", {
-            method: "POST",
-            body: imageFormData,
-          });
-          const { url, public_id } = await uploadRes.json();
-          finalImageDetails.push({ url, publicId: public_id });
-        }
-      }
-
-      selectedApiImages.forEach(img => {
-        finalImageDetails.push({
-          url: img.url,
-          publicId: `api_${img.apiCardName?.replace(/\s+/g, '_')}`
-        });
-      });
-
-      const cardData = {
-        name,
-        imageDetails: finalImageDetails,
-        price: priceInPence,
-      };
-
-      const res = await fetch("/api/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cardData),
-      });
-
-      if (!res.ok) throw new Error("Failed to add card.");
-      setMessage("Card added successfully.");
-      setName(""); setFiles(null); setPrice(""); setSearchTerm(""); setSearchResults([]); setSelectedApiImages([]);
-      const fileInput = document.getElementById('file-input') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-
-    } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setUploading(false);
-    }
+  if (!isAdmin) {
+    // If the user is logged in but not an admin, redirect them to the homepage.
+    console.log(`User ${userId} (${user?.emailAddresses[0]?.emailAddress}) attempted to access admin page without admin role. Metadata:`, user?.publicMetadata);
+    return redirect('/'); // Or a specific "access denied" page
   }
 
+  // If the user is an authenticated admin, render the actual form component.
   return (
-    <form onSubmit={handleSubmit} className={styles.formContainer}>
-      <h1 className={styles.formTitle}>Add New Card</h1>
-      {message && <div className={styles.messageBox}>{message}</div>}
-
-      <div className={styles.formGroup}>
-        <label htmlFor="cardName" className={styles.label}>Card Name</label>
-        <input id="cardName" className={styles.inputField} type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+    <div>
+      {/* You can add an admin-specific layout or title here if desired */}
+      {/* For example:
+      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <h1>Admin Dashboard</h1>
+        <p>Welcome, Admin {user?.firstName || user?.username}!</p>
       </div>
-
-      <div className={styles.formGroup}>
-        <label htmlFor="cardPrice" className={styles.label}>Price (in pence)</label>
-        <input id="cardPrice" className={styles.inputField} type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label htmlFor="pokemonSearch" className={styles.label}>Search Pokémon Card Image (Optional)</label>
-        <input id="pokemonSearch" className={styles.inputField} type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        <button type="button" onClick={handlePokemonSearch} className={styles.searchButton} disabled={isSearching}>Search API</button>
-      </div>
-
-      {searchResults.length > 0 && (
-        <div className={styles.searchResultsContainer}>
-          {searchResults.map(card => (
-            <div key={card.id} className={styles.searchResultItem}>
-              <Image src={card.images.small} alt={card.name} width={60} height={84} />
-              <span>{card.name}</span>
-              <button type="button" onClick={() => handleSelectApiImage(card)} className={styles.selectImageButton}>Use Image</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className={styles.formGroup}>
-        <label htmlFor="file-input" className={styles.label}>Upload Image(s)</label>
-        <input
-          id="file-input"
-          className={styles.fileInput}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => setFiles(e.target.files)}
-        />
-      </div>
-
-      <button type="submit" className={styles.submitButton} disabled={uploading}>
-        {uploading ? "Processing..." : "Add Card"}
-      </button>
-    </form>
+      */}
+      <AdminUploadForm />
+    </div>
   );
 }

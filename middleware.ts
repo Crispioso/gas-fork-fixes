@@ -1,12 +1,29 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
- 
-// This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
-  return NextResponse.redirect(new URL('/home', request.url))
-}
- 
-// See "Matching Paths" below to learn more
+// middleware.ts
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  const { userId, sessionClaims } = await auth();
+
+  console.log("userId:", userId);
+  console.log("sessionClaims:", sessionClaims);
+
+  const role = (sessionClaims?.publicMetadata as { role?: string })?.role;
+  console.log("role:", role);
+
+  if (isAdminRoute(req)) {
+    if (!userId || role !== "admin") {
+      console.log("Redirecting: not admin or not signed in");
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
+  return NextResponse.next();
+});
+
+
 export const config = {
-  matcher: '/about/:path*',
-}
+  matcher: ["/((?!_next|.*\\..*).*)"], // Match all routes except static files
+};
