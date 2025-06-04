@@ -1,10 +1,12 @@
 // app/admin/page.tsx
 "use client";
-import { useState, FormEvent } from "react";
-import styles from '../styles/AdminPage.module.css'; // Adjust path if you have AdminPage.module.css in app/styles/
-import Image from "next/image"; // For displaying search result images
 
-// Define types for Pokémon TCG API response
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, FormEvent } from "react";
+import styles from '../styles/AdminPage.module.css';
+import Image from "next/image";
+
 interface PokemonTCGCardImage {
   small: string;
   large: string;
@@ -14,7 +16,6 @@ interface PokemonTCGCard {
   id: string;
   name: string;
   images: PokemonTCGCardImage;
-  // Add other fields you might want from the API
 }
 
 interface PokemonTCGApiResponse {
@@ -25,27 +26,41 @@ interface PokemonTCGApiResponse {
   totalCount: number;
 }
 
-// Structure for storing selected image details
 interface SelectedImageDetail {
   url: string;
-  publicId?: string; // For Cloudinary uploads
-  source: 'upload' | 'api'; // To distinguish origin
-  apiCardName?: string; // Optional: name from API
+  publicId?: string;
+  source: 'upload' | 'api';
+  apiCardName?: string;
 }
 
-
 export default function AdminUpload() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+  const [accessDenied, setAccessDenied] = useState(false);
+
   const [name, setName] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
   const [price, setPrice] = useState("");
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
-
-  // State for Pokémon TCG API Search
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<PokemonTCGCard[]>([]);
   const [selectedApiImages, setSelectedApiImages] = useState<SelectedImageDetail[]>([]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (!user) return; // Let unauthenticated users stay and sign in
+      const role = user.publicMetadata?.role;
+      if (role !== "admin") {
+        setAccessDenied(true);
+        router.push("/");
+      }
+    }
+  }, [user, isLoaded, router]);
+
+  if (!isLoaded) return <div>Loading...</div>;
+  if (accessDenied) return null;
 
   async function handlePokemonSearch(e: FormEvent) {
     e.preventDefault();
@@ -59,48 +74,36 @@ export default function AdminUpload() {
     setSearchResults([]);
 
     try {
-      const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${encodeURIComponent(searchTerm)}*"&pageSize=10`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch from Pokémon TCG API: ${response.statusText}`);
-      }
+      const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:\"${encodeURIComponent(searchTerm)}*\"&pageSize=10`);
       const data: PokemonTCGApiResponse = await response.json();
       setSearchResults(data.data || []);
-      setMessage(data.data && data.data.length > 0 ? `${data.data.length} cards found.` : "No cards found.");
+      setMessage(data.data.length > 0 ? `${data.data.length} cards found.` : "No cards found.");
     } catch (error: any) {
-      console.error("Pokémon TCG API search error:", error);
-      setMessage(`Error searching cards: ${error.message}`);
-      setSearchResults([]);
+      console.error("API error:", error);
+      setMessage(`Error: ${error.message}`);
     } finally {
       setIsSearching(false);
     }
   }
 
   const handleSelectApiImage = (card: PokemonTCGCard) => {
-    // For simplicity, let's limit to adding just one API image for now, or you can manage multiple
-    // If allowing multiple, push to an array. Here, we'll replace or add one.
-    const newApiImage: SelectedImageDetail = {
-        url: card.images.large,
-        source: 'api',
-        apiCardName: card.name
-    };
-    // Example: allow multiple API images to be selected along with uploaded files
-    setSelectedApiImages(prev => [...prev, newApiImage]);
-    setMessage(`${card.name} image selected. You can still upload your own files or select more.`);
+    setSelectedApiImages(prev => [...prev, {
+      url: card.images.large,
+      source: 'api',
+      apiCardName: card.name
+    }]);
+    setMessage(`${card.name} image selected.`);
   };
-
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setMessage("");
-
-    if (!name || (!files && selectedApiImages.length === 0) || (files && files.length === 0 && selectedApiImages.length === 0) || !price) {
-      setMessage("Card name, at least one image (uploaded or selected from API), and price are required.");
+    if (!name || (!files && selectedApiImages.length === 0) || !price) {
+      setMessage("Name, price, and image required.");
       return;
     }
-
     const priceInPence = Number(price);
     if (isNaN(priceInPence) || priceInPence <= 0) {
-      setMessage("Price must be a positive number (in pence).");
+      setMessage("Price must be a positive number.");
       return;
     }
 
@@ -108,40 +111,27 @@ export default function AdminUpload() {
     const finalImageDetails: { url: string; publicId?: string }[] = [];
 
     try {
-      // 1. Upload manually selected files (if any)
-      if (files && files.length > 0) {
+      if (files) {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const imageFormData = new FormData();
           imageFormData.append("file", file);
-
-          setMessage(`Uploading your image ${i + 1} of ${files.length}...`);
           const uploadRes = await fetch("/api/upload", {
             method: "POST",
             body: imageFormData,
           });
-
-          if (!uploadRes.ok) {
-            const errorData = await uploadRes.json().catch(() => ({ message: `Your image ${i + 1} upload failed.` }));
-            throw new Error(errorData.message || `Your image ${i + 1} upload failed.`);
-          }
           const { url, public_id } = await uploadRes.json();
           finalImageDetails.push({ url, publicId: public_id });
         }
       }
 
-      // 2. Process selected API images
-      // For now, we'll assume we are saving the external URL directly.
-      // A more robust solution would download and re-upload these to your Cloudinary.
-      selectedApiImages.forEach(apiImg => {
-        finalImageDetails.push({ url: apiImg.url, publicId: `api_${apiImg.apiCardName?.replace(/\s+/g, '_') || 'pokemon_image'}` }); // Create a pseudo publicId for API images if needed
+      selectedApiImages.forEach(img => {
+        finalImageDetails.push({
+          url: img.url,
+          publicId: `api_${img.apiCardName?.replace(/\s+/g, '_')}`
+        });
       });
 
-      if (finalImageDetails.length === 0) {
-        throw new Error("No images were processed or selected.");
-      }
-
-      setMessage("All images processed. Adding card data...");
       const cardData = {
         name,
         imageDetails: finalImageDetails,
@@ -154,24 +144,14 @@ export default function AdminUpload() {
         body: JSON.stringify(cardData),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: "Failed to add card." }));
-        throw new Error(errorData.message || "Failed to add card.");
-      }
-
-      setMessage("Card added successfully!");
-      setName("");
-      setFiles(null);
-      setPrice("");
-      setSearchTerm("");
-      setSearchResults([]);
-      setSelectedApiImages([]);
+      if (!res.ok) throw new Error("Failed to add card.");
+      setMessage("Card added successfully.");
+      setName(""); setFiles(null); setPrice(""); setSearchTerm(""); setSearchResults([]); setSelectedApiImages([]);
       const fileInput = document.getElementById('file-input') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
 
-
     } catch (error: any) {
-      setMessage(`Error: ${error.message || "An unexpected error occurred."}`);
+      setMessage(`Error: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -180,84 +160,41 @@ export default function AdminUpload() {
   return (
     <form onSubmit={handleSubmit} className={styles.formContainer}>
       <h1 className={styles.formTitle}>Add New Card</h1>
+      {message && <div className={styles.messageBox}>{message}</div>}
 
-      {/* Message Display Area */}
-      {message && (
-        <div
-          style={{ /* Your existing message styles */
-            padding: '10px', marginBottom: '15px', borderRadius: '6px',
-            backgroundColor: message.startsWith('Error:') ? '#ffdddd' : (message.includes("successfully") ? '#ddffdd' : '#eeeeee'),
-            color: message.startsWith('Error:') ? '#d8000c' : (message.includes("successfully") ? '#4f8a10' : '#333333'),
-            border: `1px solid ${message.startsWith('Error:') ? '#ffc3c3' : (message.includes("successfully") ? '#c3ffc3' : '#cccccc')}`,
-            textAlign: 'center'
-          }}
-        >
-          {message}
-        </div>
-      )}
-
-      {/* Card Details Inputs */}
       <div className={styles.formGroup}>
         <label htmlFor="cardName" className={styles.label}>Card Name</label>
-        <input id="cardName" className={styles.inputField} type="text" placeholder="Enter card name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="cardPrice" className={styles.label}>Price (in pence)</label>
-        <input id="cardPrice" className={styles.inputField} type="number" placeholder="e.g., 1999 for £19.99" value={price} onChange={(e) => setPrice(e.target.value)} required min="1" />
+        <input id="cardName" className={styles.inputField} type="text" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
 
-      {/* Pokémon TCG API Search Section */}
+      <div className={styles.formGroup}>
+        <label htmlFor="cardPrice" className={styles.label}>Price (in pence)</label>
+        <input id="cardPrice" className={styles.inputField} type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+      </div>
+
       <div className={styles.formGroup}>
         <label htmlFor="pokemonSearch" className={styles.label}>Search Pokémon Card Image (Optional)</label>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <input
-            id="pokemonSearch"
-            className={styles.inputField}
-            type="text"
-            placeholder="Enter Pokémon name (e.g., Pikachu)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button type="button" onClick={handlePokemonSearch} disabled={isSearching || !searchTerm.trim()} className={styles.searchButton}> {/* Style .searchButton */}
-            {isSearching ? "Searching..." : "Search API"}
-          </button>
-        </div>
-        {searchResults.length > 0 && (
-          <div className={styles.searchResultsContainer}> {/* Style .searchResultsContainer */}
-            {searchResults.map(card => (
-              <div key={card.id} className={styles.searchResultItem}> {/* Style .searchResultItem */}
-                <Image src={card.images.small} alt={card.name} width={60} height={84} style={{ imageRendering: 'pixelated', border: '1px solid #ccc' }} />
-                <span style={{ flexGrow: 1, paddingLeft: '10px' }}>{card.name}</span>
-                <button type="button" onClick={() => handleSelectApiImage(card)} className={styles.selectImageButton}> {/* Style .selectImageButton */}
-                  Use Image
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <input id="pokemonSearch" className={styles.inputField} type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <button type="button" onClick={handlePokemonSearch} className={styles.searchButton} disabled={isSearching}>Search API</button>
       </div>
-      
-      {/* Display selected API images (optional visual feedback) */}
-      {selectedApiImages.length > 0 && (
-        <div className={styles.formGroup}>
-            <p className={styles.label}>Selected API Images:</p>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-                {selectedApiImages.map((img, index) => (
-                    <li key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                        <Image src={img.url} alt={img.apiCardName || 'API Image'} width={40} height={56} style={{imageRendering: 'pixelated', border: '1px solid #ccc'}}/>
-                        <span>{img.apiCardName || 'API Image'}</span>
-                    </li>
-                ))}
-            </ul>
+
+      {searchResults.length > 0 && (
+        <div className={styles.searchResultsContainer}>
+          {searchResults.map(card => (
+            <div key={card.id} className={styles.searchResultItem}>
+              <Image src={card.images.small} alt={card.name} width={60} height={84} />
+              <span>{card.name}</span>
+              <button type="button" onClick={() => handleSelectApiImage(card)} className={styles.selectImageButton}>Use Image</button>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Manual File Upload Section */}
       <div className={styles.formGroup}>
-        <label htmlFor="file-input" className={styles.label}>Or Upload Your Own Image(s) (select multiple)</label>
+        <label htmlFor="file-input" className={styles.label}>Upload Image(s)</label>
         <input
           id="file-input"
-          className={`${styles.inputField} ${styles.fileInput}`}
+          className={styles.fileInput}
           type="file"
           accept="image/*"
           multiple
@@ -265,8 +202,8 @@ export default function AdminUpload() {
         />
       </div>
 
-      <button className={styles.submitButton} type="submit" disabled={uploading}>
-        {uploading ? (message.includes("Uploading image") ? message : "Processing...") : "Add Card"}
+      <button type="submit" className={styles.submitButton} disabled={uploading}>
+        {uploading ? "Processing..." : "Add Card"}
       </button>
     </form>
   );
