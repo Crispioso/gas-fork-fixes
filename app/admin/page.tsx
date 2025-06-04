@@ -36,8 +36,8 @@ interface SelectedImageDetail {
 export default function AdminUpload() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-
   const [accessDenied, setAccessDenied] = useState(false);
+
   const [name, setName] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
   const [price, setPrice] = useState("");
@@ -50,7 +50,8 @@ export default function AdminUpload() {
 
   useEffect(() => {
     if (isLoaded) {
-      const role = user?.publicMetadata?.role;
+      if (!user) return; // Let unauthenticated users stay and sign in
+      const role = user.publicMetadata?.role;
       if (role !== "admin") {
         setAccessDenied(true);
         router.push("/");
