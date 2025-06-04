@@ -36,7 +36,17 @@ interface SelectedImageDetail {
 export default function AdminUpload() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+
   const [accessDenied, setAccessDenied] = useState(false);
+  const [name, setName] = useState("");
+  const [files, setFiles] = useState<FileList | null>(null);
+  const [price, setPrice] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<PokemonTCGCard[]>([]);
+  const [selectedApiImages, setSelectedApiImages] = useState<SelectedImageDetail[]>([]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -50,16 +60,6 @@ export default function AdminUpload() {
 
   if (!isLoaded) return <div>Loading...</div>;
   if (accessDenied) return null;
-
-  const [name, setName] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
-  const [price, setPrice] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<PokemonTCGCard[]>([]);
-  const [selectedApiImages, setSelectedApiImages] = useState<SelectedImageDetail[]>([]);
 
   async function handlePokemonSearch(e: FormEvent) {
     e.preventDefault();
@@ -161,9 +161,49 @@ export default function AdminUpload() {
       <h1 className={styles.formTitle}>Add New Card</h1>
       {message && <div className={styles.messageBox}>{message}</div>}
 
-      {/* Card Form UI Here */}
-      {/* ... include name input, price input, image upload, API search, submit button ... */}
+      <div className={styles.formGroup}>
+        <label htmlFor="cardName" className={styles.label}>Card Name</label>
+        <input id="cardName" className={styles.inputField} type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+      </div>
 
+      <div className={styles.formGroup}>
+        <label htmlFor="cardPrice" className={styles.label}>Price (in pence)</label>
+        <input id="cardPrice" className={styles.inputField} type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label htmlFor="pokemonSearch" className={styles.label}>Search Pokémon Card Image (Optional)</label>
+        <input id="pokemonSearch" className={styles.inputField} type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <button type="button" onClick={handlePokemonSearch} className={styles.searchButton} disabled={isSearching}>Search API</button>
+      </div>
+
+      {searchResults.length > 0 && (
+        <div className={styles.searchResultsContainer}>
+          {searchResults.map(card => (
+            <div key={card.id} className={styles.searchResultItem}>
+              <Image src={card.images.small} alt={card.name} width={60} height={84} />
+              <span>{card.name}</span>
+              <button type="button" onClick={() => handleSelectApiImage(card)} className={styles.selectImageButton}>Use Image</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={styles.formGroup}>
+        <label htmlFor="file-input" className={styles.label}>Upload Image(s)</label>
+        <input
+          id="file-input"
+          className={styles.fileInput}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => setFiles(e.target.files)}
+        />
+      </div>
+
+      <button type="submit" className={styles.submitButton} disabled={uploading}>
+        {uploading ? "Processing..." : "Add Card"}
+      </button>
     </form>
   );
 }
