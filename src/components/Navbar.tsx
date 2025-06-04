@@ -56,16 +56,19 @@ export default function Navbar() {
           </Link>
         </li>
 
-        {/* Conditionally render Admin link if user is an admin */}
-        <SignedIn> {/* Ensures user is signed in before checking admin status */}
-          {isAdmin && (
-            <li className={styles.navItem}>
-              <Link href="/admin" className={`${styles.navLink} ${pathname === "/admin" ? styles.navLinkActive : ''}`}>
-                Admin
-              </Link>
-            </li>
-          )}
-        </SignedIn>
+     <SignedIn>
+  {user?.publicMetadata?.role === 'admin' && (
+    <li className={styles.navItem}>
+      <Link
+        href="/admin"
+        className={`${styles.navLink} ${pathname === "/admin" ? styles.navLinkActive : ''}`}
+      >
+        Admin
+      </Link>
+    </li>
+  )}
+</SignedIn>
+
 
         {/* Clerk Authentication Controls */}
         <li className={styles.navItem}>
@@ -80,3 +83,4 @@ export default function Navbar() {
     </nav>
   );
 }
+console.log("Current user role:", user?.publicMetadata?.role);
