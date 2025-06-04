@@ -82,5 +82,7 @@ export default function Navbar() {
       </ul>
     </nav>
   );
+  console.log("Current user role:", user?.publicMetadata?.role);
+
 }
-console.log("Current user role:", user?.publicMetadata?.role);
+
