@@ -1,6 +1,5 @@
-// middleware.ts
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
@@ -10,7 +9,9 @@ export default clerkMiddleware(async (auth, req) => {
   console.log("userId:", userId);
   console.log("sessionClaims:", sessionClaims);
 
-  const role = (sessionClaims?.publicMetadata as { role?: string })?.role;
+  const metadata = sessionClaims?.metadata as { role?: string };
+  const role = metadata?.role;
+
   console.log("role:", role);
 
   if (isAdminRoute(req)) {
@@ -23,7 +24,6 @@ export default clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-
 export const config = {
-  matcher: ["/((?!_next|.*\\..*).*)"], // Match all routes except static files
+  matcher: ["/((?!_next|.*\\..*).*)"],
 };
