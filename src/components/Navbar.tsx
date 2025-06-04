@@ -73,7 +73,7 @@ export default function Navbar() {
         {/* Clerk Authentication Controls */}
         <li className={styles.navItem}>
           <SignedIn>
-            <UserButton afterSignOutUrl="" />
+            <UserButton />
           </SignedIn>
           <SignedOut>
             <Link href="/sign-in" className={styles.navLink}>Sign In</Link>
