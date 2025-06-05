@@ -40,3 +40,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tesseract-5.5.1/card_scanner.py
+test.py

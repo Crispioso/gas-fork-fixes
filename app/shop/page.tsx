@@ -20,12 +20,24 @@ interface CardItemType {
   name: string;
   images: ImageType[];
   price: number;
+  image_url?: string; // <- added for stock image support
 }
+
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function ShopPage() {
-  const { data: cards, error: cardsError } = useSWR<CardItemType[]>("/api/cards", fetcher);
+  const { data: rawCards, error: cardsError } = useSWR<CardItemType[]>("/api/cards", fetcher);
+  const cards = rawCards?.map(card => ({
+  ...card,
+  images: card.images?.length
+    ? card.images
+    : card.image_url
+    ? [{ id: `stock-${card.id}`, url: card.image_url }]
+    : []
+})) ?? [];
+
+
   const { cart, addToCart } = useCart();
   const router = useRouter();
 
@@ -119,7 +131,10 @@ export default function ShopPage() {
           {cards.map((card: CardItemType) => {
             const isInCart = cart.some(cartItem => cartItem.id === card.id && cartItem.quantity > 0);
             const currentImageIndexOnCard = currentCardImageIndexes[card.id] || 0;
-            const displayImageUrl = card.images?.[currentImageIndexOnCard]?.url || "/placeholder.png";
+            const displayImageUrl = card.image_url || card.images?.[currentImageIndexOnCard]?.url || "/placeholder.png";
+            if (!displayImageUrl) {
+              console.warn(`No image available for card ${card.name} (ID: ${card.id})`);
+            }
 
             return (
               <div key={card.id} className={styles.productCard}>
