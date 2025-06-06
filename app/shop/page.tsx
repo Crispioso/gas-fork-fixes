@@ -77,3 +77,5 @@ export default function ShopPage() {
     </main>
   );
 }
+
+// Note: Ensure you have the necessary CSS styles in ShopPage.module.css
