@@ -1,14 +1,11 @@
-// src/components/CartProvider.tsx
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-// Define types for better type safety
 interface Product {
-  id: string; // Assuming ID is a string, adjust if it's a number
+  id: string;
   name: string;
-  price: number; // Assuming price is in pence
+  price: number;
   imageUrl: string;
-  // Add any other product properties you might have
 }
 
 interface CartItem extends Product {
@@ -39,6 +36,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
+  // Load from localStorage on mount
   useEffect(() => {
     try {
       const existingCartJson = localStorage.getItem("cart");
@@ -58,11 +56,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setHydrated(true);
   }, []);
 
+  // Save cart to localStorage on change
   useEffect(() => {
     if (hydrated) {
       localStorage.setItem("cart", JSON.stringify(cart));
     }
   }, [cart, hydrated]);
+
+  // 🔁 Remove unavailable cards from cart after hydration
+  useEffect(() => {
+    if (!hydrated || cart.length === 0) return;
+
+    async function removeUnavailableFromCart() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/Card?id=in.(${cart.map(i => `"${i.id}"`).join(",")})&select=id,available`,
+          {
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+            },
+          }
+        );
+
+        const data = await res.json();
+        const stillAvailableIds = new Set(data.filter((d: any) => d.available).map((d: any) => d.id));
+        const updatedCart = cart.filter(item => stillAvailableIds.has(item.id));
+
+        if (updatedCart.length !== cart.length) {
+          console.log("🧹 Removing unavailable items from cart");
+          setCart(updatedCart);
+        }
+      } catch (err) {
+        console.error("❌ Failed to clean cart from unavailable items:", err);
+      }
+    }
+
+    removeUnavailableFromCart();
+  }, [hydrated, cart]);
+
+  if (!hydrated) {
+    return null;
+  }
 
   function addToCart(item: Product) {
     setCart((prevCart) => {
@@ -95,10 +130,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function getTotalPrice() {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  }
-
-  if (!hydrated) {
-    return null;
   }
 
   return (

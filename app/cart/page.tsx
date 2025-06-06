@@ -1,20 +1,16 @@
-// app/cart/page.tsx
 "use client";
 import { useCart } from "@/components/CartProvider";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import styles from '../styles/CartPage.module.css'; // Adjust path if you place it in app/styles/
+import styles from '../styles/CartPage.module.css';
 
-const MINIMUM_SPEND_PENCE = 30; // PayPal: Minimum 30p if enforced manually
+const MINIMUM_SPEND_PENCE = 30;
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
   const router = useRouter();
 
-  const calculateTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
-  const totalPrice = calculateTotalPrice();
+  const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const isBelowMinimumSpend = totalPrice < MINIMUM_SPEND_PENCE;
 
   async function handleCheckout() {
@@ -30,7 +26,7 @@ export default function CartPage() {
           name: item.name,
           images: [item.imageUrl],
         },
-        unit_amount: item.price, // Price in pence
+        unit_amount: item.price,
       },
       quantity: item.quantity,
       cardId: item.id,
@@ -42,8 +38,11 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineItems }),
       });
+
       const { url } = await res.json();
+
       if (url) {
+        clearCart(); // ✅ Clear cart after checkout initiated
         window.location.href = url;
       } else {
         alert("Failed to create PayPal order.");
@@ -76,13 +75,10 @@ export default function CartPage() {
       <h1 className={styles.pageTitle}>Your Shopping Cart</h1>
       <div className={styles.cartItemsList}>
         {cart.map(item => (
-          <div
-            key={item.id}
-            className={styles.cartItem}
-          >
+          <div key={item.id} className={styles.cartItem}>
             <div className={styles.itemDetails}>
               <Image
-                src={item.imageUrl || "/placeholder.png"} 
+                src={item.imageUrl || "/placeholder.png"}
                 alt={item.name}
                 width={80}
                 height={110}
@@ -91,9 +87,7 @@ export default function CartPage() {
               />
               <div>
                 <h2 className={styles.itemName}>{item.name}</h2>
-                <p className={styles.itemPrice}>
-                  Price: £{(item.price / 100).toFixed(2)}
-                </p>
+                <p className={styles.itemPrice}>Price: £{(item.price / 100).toFixed(2)}</p>
               </div>
             </div>
             <div className={styles.itemActions}>
@@ -103,17 +97,13 @@ export default function CartPage() {
                   disabled={item.quantity <= 1}
                   className={styles.quantityButton}
                   aria-label={`Decrease quantity of ${item.name}`}
-                >
-                  -
-                </button>
+                >-</button>
                 <span className={styles.quantityDisplay}>{item.quantity}</span>
                 <button
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   className={styles.quantityButton}
                   aria-label={`Increase quantity of ${item.name}`}
-                >
-                  +
-                </button>
+                >+</button>
               </div>
               <p className={styles.itemTotalPrice}>
                 £{((item.price * item.quantity) / 100).toFixed(2)}
@@ -128,6 +118,7 @@ export default function CartPage() {
           </div>
         ))}
       </div>
+
       <div className={styles.cartSummary}>
         <h2 className={styles.summaryTitle}>Cart Summary</h2>
         <div className={styles.summaryRow}>
@@ -146,7 +137,7 @@ export default function CartPage() {
         <button
           onClick={handleCheckout}
           className={styles.checkoutButton}
-          disabled={isBelowMinimumSpend} 
+          disabled={isBelowMinimumSpend}
         >
           Proceed to Checkout with PayPal
         </button>
