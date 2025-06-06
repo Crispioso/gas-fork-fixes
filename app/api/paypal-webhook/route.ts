@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,                // not NEXT_PUBLIC
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,                // not NEXT_PUBLIC
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
