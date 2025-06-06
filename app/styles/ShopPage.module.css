@@ -61,6 +61,7 @@
   flex-direction: column;
   align-items: center;
   height: 100%; /* Ensure cards in a row have same height if grid auto-rows */
+  
 }
 
 .productCard:hover {
@@ -154,13 +155,13 @@
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: 2.25rem !important;
   font-weight: 700;
   color: #00ff59!important;
   text-align: center; /* Ensure text is centered */
   margin-bottom: 0.5rem; /* Reduced margin */
   padding: 0 0.25rem; /* Added horizontal padding */
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+ font-family: "Honk", system-ui !important;
 }
 
 .addToCartButtonContainer {
