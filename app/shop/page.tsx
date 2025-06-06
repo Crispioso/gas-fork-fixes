@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import styles from "../styles/ShopPage.module.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useCart } from '@/components/CartProvider';
 
-
+// Supabase config
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   throw new Error("Missing Supabase environment variables");
 }
@@ -19,6 +20,8 @@ export default function ShopPage() {
   const [search, setSearch] = useState("");
   const [rarity, setRarity] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const { addToCart } = useCart(); // ✅ Fix: now usable
 
   const fetchCards = async () => {
     setLoading(true);
@@ -109,7 +112,19 @@ export default function ShopPage() {
                       {card.set} — #{card.number}
                     </small>
                   </p>
-                  <button className="btn btn-primary">Add to Cart</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() =>
+                      addToCart({
+                        id: card.id,
+                        name: card.name,
+                        price: card.price,
+                        imageUrl: card.image_url,
+                      })
+                    }
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>

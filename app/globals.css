@@ -40,10 +40,8 @@ body {
   font-optical-sizing: auto;
   font-weight: 900;
   font-style: bold;
-  font-size: 1.5rem !important;
-  font-variation-settings:
-    "MORF" 32,
-    "SHLN" 25;
+  font-size: 1 rem !important;
+  text-transform: uppercase!important;
 }
   
 
@@ -86,6 +84,7 @@ body {
 .text-muted {
   color: #2a3531 !important;
   font-family: sans-serif;
+  font-size: small !important;
 }
 
 .card-body {
