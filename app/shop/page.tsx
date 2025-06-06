@@ -1,211 +1,79 @@
-// app/shop/page.tsx
 "use client";
+import React, { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+// filepath: c:\dev\gay-reto-tcg\app\shop\page.tsx
+import styles from "../styles/ShopPage.module.css"; // Import ShopPage.module.css last
+import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap first
 
-import { useCart } from "@/components/CartProvider";
-import CartToast from "@/components/CartToast";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import styles from "../styles/ShopPage.module.css";
-import { useState, useEffect, useCallback } from "react";
-import useSWR from "swr";
-
-interface ImageType {
-  id: string;
-  url: string;
-  publicId?: string | null;
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error("Missing Supabase environment variables");
 }
-
-interface CardItemType {
-  id: string;
-  name: string;
-  images: ImageType[];
-  price: number;
-  image_url?: string; // <- added for stock image support
-}
-
-
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default function ShopPage() {
-  const { data: rawCards, error: cardsError } = useSWR<CardItemType[]>("/api/cards", fetcher);
-  const cards = rawCards?.map(card => ({
-  ...card,
-  images: card.images?.length
-    ? card.images
-    : card.image_url
-    ? [{ id: `stock-${card.id}`, url: card.image_url }]
-    : []
-})) ?? [];
-
-
-  const { cart, addToCart } = useCart();
-  const router = useRouter();
-
-  const [addedItemId, setAddedItemId] = useState<string | null>(null);
-  const [lastAddedCard, setLastAddedCard] = useState<{ name: string } | null>(null);
-  const [showNotification, setShowNotification] = useState(false);
-
-  const [selectedImagesForModal, setSelectedImagesForModal] = useState<ImageType[] | null>(null);
-  const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [currentCardImageIndexes, setCurrentCardImageIndexes] = useState<{ [cardId: string]: number }>({});
-
-  const handleAddToCart = (card: CardItemType) => {
-    const currentImageIndex = currentCardImageIndexes[card.id] || 0;
-    const imageUrl = card.images?.[currentImageIndex]?.url || "/placeholder.png";
-
-    const itemToAdd = {
-      ...card,
-      imageUrl,
-    };
-
-    const itemAlreadyInCart = cart.some(cartItem => cartItem.id === card.id);
-    if (!itemAlreadyInCart) {
-      addToCart(itemToAdd);
-      setAddedItemId(card.id);
-      setLastAddedCard({ name: card.name });
-      setShowNotification(true);
-      setTimeout(() => setAddedItemId(null), 2000);
-    }
-  };
-
-  const openModal = useCallback((images: ImageType[], startIndex: number = 0) => {
-    if (images && images.length > 0) {
-      setSelectedImagesForModal(images);
-      setCurrentModalImageIndex(startIndex);
-      setIsModalOpen(true);
-    }
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedImagesForModal(null);
-    setCurrentModalImageIndex(0);
-  }, []);
+  const [cards, setCards] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeModal();
+    const fetchCards = async () => {
+      const { data, error } = await supabase
+        .from("Card")
+        .select("*")
+        .eq("available", true)
+        .order("createdAt", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching cards:", error);
+        setError("Failed to load cards.");
+      } else {
+        setCards(data || []);
+      }
     };
-    if (isModalOpen) window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isModalOpen, closeModal]);
 
-  const changeCardImage = (cardId: string, direction: 'next' | 'prev', totalImages: number) => {
-    setCurrentCardImageIndexes(prevIndexes => {
-      const currentIndex = prevIndexes[cardId] || 0;
-      let newIndex = direction === 'next' ? (currentIndex + 1) % totalImages : (currentIndex - 1 + totalImages) % totalImages;
-      return { ...prevIndexes, [cardId]: newIndex };
-    });
-  };
+    fetchCards();
+  }, []);
 
-  const changeModalImage = (direction: 'next' | 'prev') => {
-    if (!selectedImagesForModal) return;
-    setCurrentModalImageIndex(prevIndex => {
-      const newIndex = direction === 'next'
-        ? (prevIndex + 1) % selectedImagesForModal.length
-        : (prevIndex - 1 + selectedImagesForModal.length) % selectedImagesForModal.length;
-      return newIndex;
-    });
-  };
-
-  if (cardsError) return <div className="error-message">Failed to load cards. (Error: {cardsError.message})</div>;
-  if (!cards) return <div className="loading-message">Loading cards…</div>;
+  if (error) return <div className="alert alert-danger p-4">{error}</div>;
+  if (!cards.length) return <div className="p-4 text-muted">Loading cards...</div>;
 
   return (
-    <main>
+    <main className={styles.pageContainer}>
       <div className={styles.shopImageBanner}>
-        <Image
+        <img
           src="/banner3.png"
-          alt="GAY RETRO TCG Banner"
-          layout="fill"
-          objectFit="contain"
-          priority
-        />
+          alt="Colorful retro trading card game banner featuring vibrant characters in playful poses with bold Gay Retro TCG text in the center, set against a lively and energetic background"
+          style={{ width: "100%"}} />
       </div>
 
-      <div className={styles.pageContentContainer}>
-        <br />
-        <div className="card-grid">
-          {cards.map((card: CardItemType) => {
-            const isInCart = cart.some(cartItem => cartItem.id === card.id && cartItem.quantity > 0);
-            const currentImageIndexOnCard = currentCardImageIndexes[card.id] || 0;
-            const displayImageUrl = card.image_url || card.images?.[currentImageIndexOnCard]?.url || "/placeholder.png";
-            if (!displayImageUrl) {
-              console.warn(`No image available for card ${card.name} (ID: ${card.id})`);
-            }
-
-            return (
-              <div key={card.id} className={styles.productCard}>
-                <div className={styles.productImageWrapper}>
-                  {card.images.length > 1 && (
-                    <button onClick={() => changeCardImage(card.id, 'prev', card.images.length)} className={`${styles.imageNavButton} ${styles.imageNavPrev}`}>&lt;</button>
-                  )}
-                  <div onClick={() => openModal(card.images, currentImageIndexOnCard)} className={styles.productImageContainer} role="button" tabIndex={0}>
-                    <Image
-                      src={displayImageUrl}
-                      alt={card.name}
-                      width={190}
-                      height={260}
-                      className={styles.productImage}
-                      style={{ imageRendering: "pixelated" }}
-                      priority={cards.indexOf(card) < 3}
-                    />
-                  </div>
-                  {card.images.length > 1 && (
-                    <button onClick={() => changeCardImage(card.id, 'next', card.images.length)} className={`${styles.imageNavButton} ${styles.imageNavNext}`}>&gt;</button>
-                  )}
-                </div>
-                <div className={styles.productName}>{card.name}</div>
-                <div className={styles.productPrice}>£{(card.price / 100).toFixed(2)}</div>
-                <div className={styles.addToCartButtonContainer}>
-                  <button
-                    onClick={() => !isInCart && handleAddToCart(card)}
-                    className={`shop-btn ${isInCart ? styles.inCartButtonDark : ''}`}
-                    disabled={isInCart}
-                  >
-                    {isInCart ? "In Cart" : "Add to Cart"}
-                  </button>
-                  {!isInCart && addedItemId === card.id && (
-                    <span className={styles.addedMessage}>Added!</span>
-                  )}
+      <div className="container"> {/* Bootstrap Container */}
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-3"> {/* Bootstrap Grid Classes */}
+          {cards.map((card) => (
+            <div key={card.id} className="col"> {/* Bootstrap Column */}
+              <div className="card h-100"> {/* Bootstrap Card */}
+                <img
+                  src={card.image_url}
+                  alt={card.name}
+                  className="card-img-top" // or styles.productImage if you keep that
+                />
+                <div className="card-body">
+                  <h5 className="card-title">{card.name}</h5>
+                  <p className="card-text">
+                    {typeof card.price === "number"
+                      ? `$${(card.price / 100).toFixed(2)}`
+                      : "N/A"}
+                  </p>
+                  <p className="card-text"><small className="text-muted">{card.set} — #{card.number}</small></p>
+                  
+                  <button className="btn btn-primary">Add to Cart</button>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
-
-      {isModalOpen && selectedImagesForModal && selectedImagesForModal.length > 0 && (
-        <div className={styles.modalOverlay} onClick={closeModal} role="dialog" aria-modal="true">
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalCloseButton} onClick={closeModal}>&times;</button>
-            {selectedImagesForModal.length > 1 && (
-              <button onClick={() => changeModalImage('prev')} className={`${styles.imageNavButton} ${styles.modalImageNavPrev}`}>&lt;</button>
-            )}
-            <Image
-              src={selectedImagesForModal[currentModalImageIndex].url}
-              alt="Enlarged product image"
-              width={600}
-              height={800}
-              style={{ imageRendering: "pixelated", objectFit: 'contain', maxHeight: '85vh', maxWidth: '80vw' }}
-            />
-            {selectedImagesForModal.length > 1 && (
-              <button onClick={() => changeModalImage('next')} className={`${styles.imageNavButton} ${styles.modalImageNavNext}`}>&gt;</button>
-            )}
-          </div>
-          <div className={styles.modalImageCounter}>{currentModalImageIndex + 1} / {selectedImagesForModal.length}</div>
-        </div>
-      )}
-
-      {lastAddedCard && (
-        <CartToast
-          visible={showNotification}
-          itemName={lastAddedCard.name}
-          onHide={() => setShowNotification(false)}
-        />
-      )}
     </main>
   );
 }

@@ -1,18 +1,51 @@
 /* app/shop/ShopPage.module.css */
-.shopImageBanner {
-  width: 100%; /* Stretches to the full width of its container (main tag) */
-  height: 33vh; /* Approximately 1/3 of the viewport height - adjust as needed */
-  position: relative; /* Crucial for Next/Image with layout="fill" */
-  overflow: hidden; 
-
-  object-fit: contain;/* Ensures image parts outside this div are not shown */
-  background-color: #282828; /* Fallback color if image is slow to load or fails */
-}
+/* ShopPage.module.css */
 .pageContainer {
-  max-width: 1200px;
-  margin: 2rem auto; /* Add some margin for the page container */
-  padding: 1rem;
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0; /* Light background for contrast */
+  min-height: 100vh; /* Ensure full height */
   
+}
+.shopHeader {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.shopImageBanner {
+  width: 100%;
+  max-height: 30rem; /* Adjust this value to your desired height */
+  overflow: hidden;
+}
+
+.shopImageBanner img {
+  height: 30rem;
+  width: 100%;
+  object-fit: contain; /* Try different values: cover, contain, fill */
+  align-items: center;
+  background-color: #282828;
+}
+
+.productCard {
+  /* width: 200px; Remove this line */
+  margin: 10px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+}
+
+.productImageWrapper {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* Dark Product Card Style */
@@ -99,23 +132,35 @@
 
 .imageNavNext {
   right: 5px;
-}
-
+}/* ...existing styles... */
 
 .productName {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #000000;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  min-height: 2.2rem; 
+  color: #ff0000;
+  text-align: center; /* Ensure text is centered */
+  margin-bottom: 0.25rem; /* Reduced margin */
+  min-height: 2.2rem;
+  padding: 0 0.25rem; /* Added horizontal padding */
 }
 
 .productPrice {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #b6e3c6; 
-  margin-bottom: 1rem;
+  color: #b6e3c6;
+  text-align: center; /* Ensure text is centered */
+  margin-bottom: 0.5rem; /* Reduced margin */
+  padding: 0 0.25rem; /* Added horizontal padding */
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #00ff59!important;
+  text-align: center; /* Ensure text is centered */
+  margin-bottom: 0.5rem; /* Reduced margin */
+  padding: 0 0.25rem; /* Added horizontal padding */
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 .addToCartButtonContainer {
@@ -123,19 +168,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: auto; 
+  margin-top: auto;
   width: 100%;
+  color: blue !important;
+  padding: 0 0.25rem; /* Added horizontal padding */
 }
+
+/* ...existing styles... */
 
 .addedMessage {
   margin-top: 8px;
-  color: #b6e3c6; 
+  color: #b6e3c6;
   font-size: 0.9em;
   font-weight: 500;
 }
 
 .inCartButtonDark {
-  background-color: #374151 !important; 
+  background-color: #374151 !important;
   color: #9ca3af !important;
   cursor: not-allowed;
 }
@@ -203,9 +252,8 @@
 }
 
 .modalImageCounter {
-    color: white;
-    margin-top: 10px;
-    font-size: 0.9rem;
-    font-weight: 500;
+  color: white;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
-

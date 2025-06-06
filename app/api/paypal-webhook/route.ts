@@ -1,8 +1,11 @@
 // app/api/paypal-webhook/route.ts
 import { NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
 
-const prisma = new PrismaClient();
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Needs service role to update rows
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,16 +45,6 @@ export async function POST(req: NextRequest) {
 
     const { access_token } = await accessTokenRes.json();
 
-    console.log("Sending to PayPal verification:", JSON.stringify({
-      auth_algo: authAlgo,
-      cert_url: certUrl,
-      transmission_id: transmissionId,
-      transmission_sig: transmissionSig,
-      transmission_time: transmissionTime,
-      webhook_id: webhookId,
-      webhook_event: event,
-    }, null, 2));
-
     const verificationRes = await fetch(`${process.env.PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
       headers: {
@@ -71,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     const verification = await verificationRes.json();
     if (verification.verification_status !== 'SUCCESS') {
-      console.error("Failed PayPal webhook verification:", verification);
+      console.error("❌ Failed PayPal webhook verification:", verification);
       return new Response('Webhook verification failed', { status: 400 });
     }
 
@@ -87,14 +80,15 @@ export async function POST(req: NextRequest) {
       const cardIds = customId.split(',');
 
       for (const cardId of cardIds) {
-        try {
-          await prisma.card.update({
-            where: { id: cardId },
-            data: { available: false },
-          });
-          console.log(`✅ Marked card ${cardId} as unavailable`);
-        } catch (error) {
+        const { error } = await supabase
+          .from("Card")
+          .update({ available: false })
+          .eq("id", cardId);
+
+        if (error) {
           console.error(`❌ Failed to update card ${cardId}`, error);
+        } else {
+          console.log(`✅ Marked card ${cardId} as unavailable`);
         }
       }
     }
