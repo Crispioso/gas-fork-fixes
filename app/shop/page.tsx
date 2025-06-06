@@ -7,6 +7,7 @@ import { useCart } from "@/components/CartProvider";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+
 // Supabase
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   throw new Error("Missing Supabase environment variables");
@@ -23,6 +24,8 @@ export default function ShopPage() {
   const [rarity, setRarity] = useState("");
   const [setName, setSetName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [setOptions, setSetOptions] = useState<string[]>([]);
+
 
   const { addToCart } = useCart();
 
@@ -48,6 +51,12 @@ export default function ShopPage() {
   useEffect(() => {
     fetchCards();
   }, [search, rarity, setName]);
+useEffect(() => {
+  fetch("/api/sets")
+    .then(res => res.json())
+    .then(data => setSetOptions(data.sets || []))
+    .catch(err => console.error("Failed to load sets", err));
+}, []);
 
   const handleAddToCart = (card: any) => {
     addToCart({
@@ -97,15 +106,21 @@ export default function ShopPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="col-md-4 mb-2">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search by set name..."
-              value={setName}
-              onChange={(e) => setSetName(e.target.value)}
-            />
-          </div>
+         <div className="col-md-4 mb-2">
+  <select
+    className="form-select"
+    value={setName}
+    onChange={(e) => setSetName(e.target.value)}
+  >
+    <option value="">All Sets</option>
+    {setOptions.map((set) => (
+      <option key={set} value={set}>
+        {set}
+      </option>
+    ))}
+  </select>
+</div>
+
           <div className="col-md-4 mb-2">
             <select
               className="form-select"

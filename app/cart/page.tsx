@@ -42,9 +42,10 @@ export default function CartPage() {
       const { url } = await res.json();
 
       if (url) {
-        clearCart(); // ✅ Clear cart after checkout initiated
-        window.location.href = url;
-      } else {
+  window.location.href = url;
+  setTimeout(() => clearCart(), 2000); // or delay longer if needed
+}
+else {
         alert("Failed to create PayPal order.");
       }
     } catch (error) {
