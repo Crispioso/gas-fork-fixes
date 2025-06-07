@@ -144,34 +144,38 @@ useEffect(() => {
         {/* ✅ Card Grid */}
         <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           {cards.map((card) => (
-            <div key={card.id} className="col">
-              <div className={`card h-100 animate__animated animate__flipInY`}>
-                <img
-                  src={card.image_url}
-                  alt={card.name}
-                  className="card-img-top"
-                />
-                <div className="card-body">
-                  <h5 className="card-title">{card.name}</h5>
-                  <p className="card-text">
-                    {typeof card.price === "number"
-                      ? `£${(card.price / 100).toFixed(2)}`
-                      : "N/A"}
-                  </p>
-                  <p className="card-text">
-                    <small className="text-muted">
-                      {card.set} — #{card.number}
-                    </small>
-                  </p>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleAddToCart(card)}
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            </div>
+     <div className="col">
+  <div className="flip-card">
+    <div className="flip-card-inner">
+      <div className="flip-card-front">
+        <img src={card.image_url} alt={card.name} className="img-fluid rounded shadow" />
+      </div>
+      <div className="flip-card-back">
+        <img src={card.scan_url} alt={`Scanned: ${card.name}`} className="img-fluid rounded shadow" />
+      </div>
+    </div>
+    <div className="card-body text-center mt-2">
+      <h5 className="card-title">{card.name}</h5>
+      <p className="card-text">
+        {typeof card.price === "number"
+          ? `£${(card.price / 100).toFixed(2)}`
+          : "N/A"}
+      </p>
+      <p className="card-text">
+        <small className="text-muted">
+          {card.set} — #{card.number}
+        </small>
+      </p>
+      <button
+        className="btn btn-primary"
+        onClick={() => handleAddToCart(card)}
+      >
+        Add to Cart
+      </button>
+    </div>
+  </div>
+</div>
+
           ))}
         </div>
       </div>
