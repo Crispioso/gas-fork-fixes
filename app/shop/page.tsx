@@ -145,15 +145,19 @@ useEffect(() => {
         <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
           {cards.map((card) => (
      <div className="col">
+  <div className="flip-wrapper">
   <div className="flip-card">
     <div className="flip-card-inner">
       <div className="flip-card-front">
-        <img src={card.image_url} alt={card.name} className="img-fluid rounded shadow" />
+        <img src={card.image_url} alt={card.name} className="card-img-top" />
       </div>
       <div className="flip-card-back">
-        <img src={card.scan_url} alt={`Scanned: ${card.name}`} className="img-fluid rounded shadow" />
+        <img src={card.scan_url || "/fallback.jpg"} alt="Scanned Card" className="card-img-top" />
       </div>
     </div>
+  </div>
+
+
     <div className="card-body text-center mt-2">
       <h5 className="card-title">{card.name}</h5>
       <p className="card-text">
