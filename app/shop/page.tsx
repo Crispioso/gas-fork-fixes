@@ -189,7 +189,7 @@ useEffect(() => {
         </div>
       </div>
       <div style={{ paddingTop: "20px", height: "3rem", width: "100%", }}></div>
-      <footer style={{ paddingTop: "20px", height: "3rem", width: "100%", background: "#282828" }}></footer>
+      <footer style={{ paddingTop: "20px", height: "3rem", width: "100%", background: "#282828", position: "static" }}></footer>
     </main> 
   );
     
