@@ -1,11 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import styles from "../styles/ShopPage.module.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useCart } from "@/components/CartProvider";
 import { ToastContainer, toast, Flip } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 
 
 // Supabase
@@ -28,8 +29,7 @@ export default function ShopPage() {
 
 
   const { addToCart } = useCart();
-
-  const fetchCards = async () => {
+const fetchCards = useCallback(async () => {
     setLoading(true);
     let query = supabase.from("Card").select("*").eq("available", true);
 
@@ -46,11 +46,11 @@ export default function ShopPage() {
       setCards(data || []);
     }
     setLoading(false);
-  };
+  }, [search, rarity, setName, supabase]); // Add dependencies of fetchCards
 
   useEffect(() => {
     fetchCards();
-  }, [search, rarity, setName]);
+  }, [fetchCards]);
 useEffect(() => {
   fetch("/api/sets")
     .then(res => res.json())
@@ -141,45 +141,50 @@ useEffect(() => {
         {error && <div className="alert alert-danger">{error}</div>}
         {loading && <div className="text-muted">Loading cards...</div>}
 
-        {/* ✅ Card Grid */}
-        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+     {/* ✅ Card Grid */}
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
           {cards.map((card) => (
-     <div className="col">
-  <div className="flip-wrapper">
-  <div className="flip-card">
-    <div className="flip-card-inner">
-      <div className="flip-card-front">
-        <img src={card.image_url} alt={card.name} className="card-img-top" />
-      </div>
-      <div className="flip-card-back">
-        <img src={card.scan_url || "/fallback.jpg"} alt="Scanned Card" className="card-img-top" />
-      </div>
-    </div>
-  </div>
-
-
-    <div className="card-body text-center mt-2">
-      <h5 className="card-title">{card.name}</h5>
-      <p className="card-text">
-        {typeof card.price === "number"
-          ? `£${(card.price / 100).toFixed(2)}`
-          : "N/A"}
-      </p>
-      <p className="card-text">
-        <small className="text-muted">
-          {card.set} — #{card.number}
-        </small>
-      </p>
-      <button
-        className="btn btn-primary"
-        onClick={() => handleAddToCart(card)}
-      >
-        Add to Cart
-      </button>
-    </div>
+            <div className="col" key={card.id}> {/* Added key prop here */}
+              <div className="flip-wrapper">
+                <div className="flip-card">
+                  <div className="flip-card-inner">
+                    <div className="flip-card-front">
+  <div className="flip-image-container">
+    <img src={card.image_url} alt={card.name} className="card-img-top" />
   </div>
 </div>
 
+<div className="flip-card-back">
+  <div className="flip-image-container">
+    <img src={card.scan_url || "/fallback.jpg"} alt="Scanned Card" className="card-img-top" />
+  </div>
+</div>
+
+                  </div>
+                </div>
+
+
+                <div className="card-body text-center mt-2">
+                  <h5 className="card-title">{card.name}</h5>
+                  <p className="card-text">
+                    {typeof card.price === "number"
+                      ? `£${(card.price / 100).toFixed(2)}`
+                      : "N/A"}
+                  </p>
+                  <p className="card-text">
+                    <small className="text-muted">
+                      {card.set} — #{card.number}
+                    </small>
+                  </p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleAddToCart(card)}
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
