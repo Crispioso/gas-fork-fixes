@@ -188,6 +188,11 @@ useEffect(() => {
           ))}
         </div>
       </div>
-    </main>
+      <div style={{ paddingTop: "20px", height: "3rem", width: "100%", }}></div>
+      <footer style={{ paddingTop: "20px", height: "3rem", width: "100%", background: "#282828" }}></footer>
+    </main> 
   );
+    
+  
+
 }
