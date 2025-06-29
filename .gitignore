@@ -43,3 +43,5 @@ next-env.d.ts
 tesseract-5.5.1/card_scanner.py
 test.py
 card_scanner.py
+# clerk configuration (can include secrets)
+/.clerk/
