@@ -1,5 +1,4 @@
-
-
+/* app/globals.css */
 
 /* Optional custom styles after this */
 html {
@@ -11,23 +10,22 @@ html {
 }
 
 body {
-  margin: 0; /* Add this to remove default body margin */
+  margin: 0;
   background: #f7fafc;
   color: #374151;
   font-family: 'Inter', sans-serif;
   letter-spacing: 0.1px;
-
 }
+
+/* Keep .flip-wrapper, .flip-card, .flip-card-inner, .flip-card-front, .flip-card-back styles if you use them elsewhere */
 .flip-wrapper {
   perspective: 1000px;
 }
-
 .flip-card {
   width: 100%;
   height: 350px;
   position: relative;
 }
-
 .flip-card-inner {
   width: 100%;
   height: 100%;
@@ -35,11 +33,9 @@ body {
   transform-style: preserve-3d;
   transition: transform 0.6s;
 }
-
 .flip-card:hover .flip-card-inner {
   transform: rotateY(180deg);
 }
-
 .flip-card-front,
 .flip-card-back {
   width: 100%;
@@ -49,12 +45,10 @@ body {
   top: 0;
   left: 0;
 }
-
 .flip-card-front {
   z-index: 2;
   transform: rotateY(0deg);
 }
-
 .flip-card-back {
   transform: rotateY(180deg);
 }
@@ -76,34 +70,34 @@ body {
   .shop-title { font-size: 1.5rem; }
 }
 
+/* MODIFIED: Remove font-size here entirely, let ShopPage.module.css control it for shop cards. */
 .card-title {
-  font-family: 'Inter', sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 900;
-  font-style: bold;
-  font-size: 1 rem !important;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  
   text-transform: uppercase!important;
 }
-  
 
-
+/* REMOVE THIS ENTIRE BLOCK - It's from a module CSS and shouldn't be in globals */
+/*
 .ShopPage_pageContainer__B1sK6 {
   min-height:auto !important;
 }
+*/
 
-/* Card styles */
+/* MODIFIED: Card styles - Remove all height/display/flex properties here.
+   These will be managed by ShopPage.module.css for shop cards.
+   Only keep border, border-radius, padding, box-shadow, transition if they apply globally to ALL cards. */
 .card {
-  min-height: auto !important;
   background: #fff;
   border: 1.5px solid #a7c7e7;
-
   border-radius: 28px !important;
   padding: 22px 16px 16px 16px;
   box-shadow: 0 8px 32px #a7c7e722;
   transition: box-shadow 0.18s, transform 0.16s;
-  display: flex; /* Added to help align items within a card if needed */
-  flex-direction: column; /* Added to stack items vertically within a card */
-  align-items: center; /* Center items horizontally within a card */
+  /* REMOVE THE FOLLOWING CONFLICTING LINES */
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* align-items: center; */
 }
 
 .card:hover {
@@ -111,10 +105,9 @@ body {
   transform: scale(1.03);
 }
 
-
 .card-text {
   font-family: sans-serif;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #000000;
   text-align: center;
@@ -128,12 +121,16 @@ body {
   font-size: small !important;
 }
 
+/* MODIFIED: .card-body - Keep padding if global, remove flex properties as module will handle */
 .card-body {
-  padding: 0 !important;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 0 !important; /* Keep if this is a global override for all card-bodies */
+  /* REMOVE THE FOLLOWING CONFLICTING LINES */
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* align-items: center; */
 }
+
+/* This .card-img block is for CardItem.tsx. Keep it as is. */
 .card-img {
   width: 190px !important;
   height: 260px !important;
@@ -146,18 +143,32 @@ body {
   display: block;
 }
 
-.card-img-top{
+/* CRITICAL REMOVAL: This .card-img-top block is the main issue.
+   REMOVE THIS ENTIRE BLOCK (and any other .card-img-top definitions) */
+/*
+.card-img-top {
   width: 100%;
-  height: auto;
+  max-width: 80%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
   border-radius: 16px;
-  object-fit: cover;
   padding-bottom: 1em;
 }
+*/
 
 @media (max-width: 600px) {
+  /* MODIFIED: .card-img media query - only keep if you want it to apply to .card-img (CardItem.tsx) */
   .card-img {
     width: 120px !important;
     height: 160px !important;
+  }
+  /* MODIFIED: .card and .card-text media queries - these seem appropriate to keep globally if they apply to all cards */
+  .card {
+    padding: 16px 12px;
+  }
+  .card-text {
+    font-size: 1rem;
   }
 }
 
@@ -185,10 +196,7 @@ body {
   box-shadow: 0 4px 18px #f9c6d655;
 }
 
-
-
-.btn-primary{ 
-  
+.btn-primary{
   color: #fff;
   border: 1px solid #ffffff !important;
   border-radius: 999px;
@@ -224,11 +232,12 @@ body {
   border: 1.5px dashed #b8e0d2;
   font-size: 1.2rem;
   margin-bottom: 1em;
-  display: flex; /* Added for centering content if needed */
-  align-items: center; /* Added for centering content if needed */
-  justify-content: center; /* Added for centering content if needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Added to prevent content overflow if image is too big */
 }
-.nav-link { /* These styles might be superseded by Navbar.module.css if specific enough */
+.nav-link {
   padding: 8px 20px;
   border-radius: 8px;
   font-weight: 500;
@@ -236,7 +245,7 @@ body {
   transition: background 0.15s, color 0.15s;
 }
 .nav-link:hover, .nav-link:focus {
-  background: #b8e0d2;      /* pastelMint */
+  background: #b8e0d2;
   color: #374151;
   text-decoration: none;
 }
@@ -276,20 +285,8 @@ main {
     height: 300px; /* reduce card height on small screens */
   }
 
-@media (max-width: 600px) {
-  .card {
-    padding: 16px 12px; /* reduce padding on small screens */
-  }
-
-  .card-img {
-    width: 100% !important; /* make card image full width on small screens */
-    height: auto !important; /* adjust height to maintain aspect ratio */
-  }
-
-  .card-text {
-    font-size: 1rem; /* reduce font size on small screens */
-  }
-}   
+/* REMOVED THIS BLOCK entirely as it conflicts with ShopPage.module.css */
+/*
 .flip-image-container {
   width: 100%;
   height: 100%;
@@ -298,10 +295,10 @@ main {
   justify-content: center;
   overflow: hidden;
 }
-
 .card-img-top {
   max-width: 80%;
   max-height: 100%;
   object-fit: contain;
   display: block;
 }
+*/

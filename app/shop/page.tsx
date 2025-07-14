@@ -68,6 +68,14 @@ useEffect(() => {
     toast.success(`${card.name} added to cart!`);
   };
 
+  // Function to truncate text
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length > maxLength) {
+      return text.substring(0, maxLength - 3) + '...';
+    }
+    return text;
+  };
+
   return (
     <main className={styles.pageContainer}>
       {/* ✅ Banner Image */}
@@ -141,10 +149,11 @@ useEffect(() => {
         {error && <div className="alert alert-danger">{error}</div>}
         {loading && <div className="text-muted">Loading cards...</div>}
 
+     
      {/* ✅ Card Grid */}
-        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+        <div className={`row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 ${styles.productGridRow}`}>
           {cards.map((card) => (
-  <div className="col" key={card.id}>
+  <div className={`col ${styles.productColWrapper}`} key={card.id}>
     <div className="card">
       <img
         src={ card.image_url || "/fallback.jpg"}
@@ -159,8 +168,8 @@ useEffect(() => {
             : "N/A"}
         </p>
         <p className="card-text">
-          <small className="text-muted">
-            {card.set} — #{card.number}
+          <small className="text-muted" title={card.set}> {/* Added title attribute here */}
+            {truncateText(card.set, 18)} — #{card.number}
           </small>
         </p>
         <button

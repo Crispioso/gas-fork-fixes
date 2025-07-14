@@ -1,25 +1,35 @@
+// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ... any other existing configurations you have ...
-
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        // port: '', // Port is optional and usually not needed for https
-        pathname: '/dkm3vd6cx/image/upload/**', // Your specific Cloudinary path
+        pathname: '/dkm3vd6cx/image/upload/**',
       },
       {
         protocol: 'https',
         hostname: 'images.pokemontcg.io',
-        pathname: '/**', // Allows any path on this hostname for Pokemon images
+        pathname: '/**',
       },
-      // ... you can add more patterns here if needed in the future ...
     ],
   },
 
-  // ... any other existing configurations you have ...
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/shop',
+        permanent: true,
+      },
+    ];
+  },
+
+  // Remove or comment out the 'experimental' block if you get the error
+  // experimental: {
+  //   allowedDevOrigins: ['http://192.168.0.71:3000'],
+  // },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

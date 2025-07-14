@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^2.49.10",
     "bootstrap": "^5.3.6",
     "cloudinary": "^2.6.1",
+    "file-tree": "^1.0.0",
     "formidable": "^3.5.4",
     "git": "^0.1.5",
     "micro": "^10.0.1",
